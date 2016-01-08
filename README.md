@@ -21,6 +21,7 @@ BYU ECEn 360 Electromagnetics - Winter 2016
 1. From the command line on your computer, navigate to where you want to download the repository.
 2. Execute: git clone https://github.com/gregnordin/ECEn360_Winter2016.git
 3. This will create the directory "ECEn360_Winter2016" and populate it with all of the files in this repository.
+4. Note: a good introduction to git is the free [CodeAcademy tutorial](https://www.codecademy.com/learn/learn-git)
 
 **View IPython Notebooks Without Installing Any Software**:
 
