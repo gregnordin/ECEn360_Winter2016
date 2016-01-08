@@ -34,3 +34,7 @@ Click [here](http://nbviewer.ipython.org/github/gregnordin/ECEn360_W15/tree/mast
 5. In this new tab or window, navigate to your local folder containing the repository (ECEn360_Winter2016)
 6. Open the desired IPython Notebook file
 7. To execute an input cell in a notebook, place the cursor anywhere in the cell and type return while holding down the shift key
+
+**Matlab and Python Homework Problems**
+
+Each homework assignment will contain at least one problem that must be solved on a computer with either Matlab or Python. The intent is to continue the initiative begun in your sophmore-level courses to have you learn at least one programming tool. Links to computer homework problems are provided in each homework assignment. If you are interested, all of the computer homework problems are consolidated on [this page](http://ecenmatlab.groups.et.byu.net/doku.php?id=ecen_360_assignments).
