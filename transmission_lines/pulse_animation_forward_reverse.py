@@ -83,10 +83,7 @@ velocity = Slider(title="Velocity (m/s)", value=5.0, start=0.1, end=10.0, step=0
 velocity.on_change('value', update_velocity)
 
 # Set up layout
-#layout = hplot(p, VBox(toggle, button_reset, velocity))
 layout = hplot(p, VBox(toggle, button_reset, velocity, height=400), width=900)
-#controls = vplot(vplot(toggle, button_reset), velocity)
-#layout = hplot(p, controls)
 
 # Create callback function for periodic callback
 def update():
