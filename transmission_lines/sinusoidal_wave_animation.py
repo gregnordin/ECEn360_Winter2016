@@ -69,7 +69,7 @@ def reset_handler():
     current_time = 0
     x_last = 0
     t_last = 0
-    l_forward.data_source.data["y"] = np.cos(twopi * (-z_norm))
+    l_forward.data_source.data["y"] = np.cos(twopi * (current_time - z_norm))
     #l_reverse.data_source.data["y"] = vpulse(x + u*current_time)
     #t2.data_source.data["text"] = ['t = {:.3f} s'.format(current_time)]
 button_reset = Button(label="Reset", type="success")
@@ -93,7 +93,7 @@ def update():
     global ii, current_time
     if toggle.active:
         ii += 1
-        current_time = ii / (freq_Hz * n_samp_one_temporal_cycle)
-        l_forward.data_source.data["y"] = np.cos(twopi * (freq_Hz*current_time - z_norm))
+        current_time = ii / n_samp_one_temporal_cycle
+        l_forward.data_source.data["y"] = np.cos(twopi * (current_time - z_norm))
         #l_reverse.data_source.data["y"] = vpulse( x + x_last + u*(current_time-t_last) )
         #t2.data_source.data["text"] = ['t = {:.3f} s'.format(current_time)]
