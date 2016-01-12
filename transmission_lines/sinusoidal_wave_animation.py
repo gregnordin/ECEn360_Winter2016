@@ -21,6 +21,7 @@ velocity_mps = 2e8
 wavelength_m = velocity_mps / freq_Hz
 twopi = 2.0*np.pi
 n_samp_one_temporal_cycle = 30
+alpha = 0.0
 u = 5.0
 current_time = 0.0
 zmin = -20
@@ -29,7 +30,7 @@ numpnts = 500
 periodic_callback_time_ms = 16
 z = np.linspace(zmin,zmax,numpnts)
 z_norm = z/wavelength_m
-y1 = np.cos(twopi * (-z_norm))
+y1 = np.exp(-alpha*(z - zmin)) * np.cos(twopi * (current_time - z_norm))
 #y2 = vpulse(x + u*current_time)
 
 ii = 0
@@ -69,24 +70,26 @@ def reset_handler():
     current_time = 0
     x_last = 0
     t_last = 0
-    l_forward.data_source.data["y"] = np.cos(twopi * (current_time - z_norm))
+    l_forward.data_source.data["y"] = np.exp(-alpha*(z - zmin)) * np.cos(twopi * (current_time - z_norm))
     #l_reverse.data_source.data["y"] = vpulse(x + u*current_time)
     #t2.data_source.data["text"] = ['t = {:.3f} s'.format(current_time)]
 button_reset = Button(label="Reset", type="success")
 button_reset.on_click(reset_handler)
 
 # Set up slider & callback function
-def update_velocity(attrname, old, new):
-    global u, current_time, x_last, t_last
+def update_alpha(attrname, old, new):
+    global alpha, current_time, x_last, t_last
     x_last += u * (current_time - t_last)
     t_last = current_time
-    u = velocity.value
+    alpha = alpha_slider.value
+    if not toggle.active:
+        l_forward.data_source.data["y"] = np.exp(-alpha*(z - zmin)) * np.cos(twopi * (current_time - z_norm))
     #t1.data_source.data["text"] = ['u = {} m/s'.format(u)]
-velocity = Slider(title="Velocity (m/s)", value=5.0, start=0.1, end=10.0, step=0.1)
-#velocity.on_change('value', update_velocity)
+alpha_slider = Slider(title="Alpha (1/m)", value=0.0, start=0.0, end=0.25, step=0.005)
+alpha_slider.on_change('value', update_alpha)
 
 # Set up layout
-layout = hplot(p, VBox(toggle, button_reset, velocity, height=400), width=900)
+layout = hplot(p, VBox(toggle, button_reset, alpha_slider, height=400), width=900)
 
 # Create callback function for periodic callback
 def update():
@@ -94,6 +97,6 @@ def update():
     if toggle.active:
         ii += 1
         current_time = ii / n_samp_one_temporal_cycle
-        l_forward.data_source.data["y"] = np.cos(twopi * (current_time - z_norm))
+        l_forward.data_source.data["y"] = np.exp(-alpha*(z - zmin)) * np.cos(twopi * (current_time - z_norm))
         #l_reverse.data_source.data["y"] = vpulse( x + x_last + u*(current_time-t_last) )
         #t2.data_source.data["text"] = ['t = {:.3f} s'.format(current_time)]
