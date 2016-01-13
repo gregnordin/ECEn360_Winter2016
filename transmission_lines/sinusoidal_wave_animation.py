@@ -3,17 +3,6 @@ from bokeh.models.widgets import Button, Toggle, Slider, VBoxForm, HBox, VBox
 from bokeh.driving import linear
 import numpy as np
 
-# Define a simple arbitrary pulse function. Let's use 1/2 cycle of a cosine centered at 0,
-# and zero everywhere else.
-def pulse(a):
-    if a < np.pi/2.0 and a > -np.pi/2.0:
-        return np.cos(a)
-    else:
-        return 0.0
-
-# Create a vectorized version of the pulse function so we can pass arrays as arguments
-# and automatically return an array
-vpulse = np.vectorize(pulse)
 
 # Forward & reverse propagating waves. Use global variables to pass values into function.
 def forward_wave():
@@ -30,7 +19,6 @@ twopi = 2.0*np.pi
 n_samp_one_temporal_cycle = 30
 alpha = 0.0
 reflection_coef = 1.0
-u = 5.0
 current_time = 0.0
 zmin = -20
 zmax = 0
@@ -42,8 +30,6 @@ v1 = forward_wave()
 v2 = reverse_wave()
 
 ii = 0
-x_last = 0.0  #sum of u_j*(t_j - t_{j-1}) for changes in velocity
-t_last = 0.0  #time at which velocity was last changed by user with slider
 
 # Set up plot
 p = figure(plot_width=600, plot_height=400, x_range=(zmin,zmax), y_range=(-2.1,2.1), \
@@ -73,11 +59,9 @@ toggle.active = False
 
 # Set up reset button
 def reset_handler():
-    global ii, current_time, x_last, t_last
+    global ii, current_time
     ii = 0
     current_time = 0
-    x_last = 0
-    t_last = 0
     l_forward.data_source.data["y"] = forward_wave()
     l_reverse.data_source.data["y"] = reverse_wave()
     #t2.data_source.data["text"] = ['t = {:.3f} s'.format(current_time)]
@@ -86,9 +70,7 @@ button_reset.on_click(reset_handler)
 
 # Set up slider & callback function
 def update_alpha(attrname, old, new):
-    global alpha, current_time, x_last, t_last
-    x_last += u * (current_time - t_last)
-    t_last = current_time
+    global alpha, current_time
     alpha = alpha_slider.value
     if not toggle.active:
         l_forward.data_source.data["y"] = forward_wave()
