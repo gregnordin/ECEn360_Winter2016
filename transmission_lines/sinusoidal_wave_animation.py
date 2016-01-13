@@ -49,8 +49,8 @@ p.xaxis.axis_label = "z (m)"
 p.yaxis.axis_label = "Voltage (V)"
 t1 = p.text(zmin+1.5, 1.5, text=['f = {} MHz'.format(freq_Hz/1.e6)],
             text_align="left", text_font_size="10pt")
-t2 = p.text(zmin+1.5, 1.3, text=['\u03BB = {} m'.format(wavelength_m)], text_align="left", text_font_size="10pt")
-#t3 = p.text(zmin+1.5, 1.0-0.16, text=['Stopped'], text_align="left", text_font_size="10pt")
+t2 = p.text(zmin+1.5, 1.3, text=['\u03BB = u/f = {} m'.format(wavelength_m)], text_align="left", text_font_size="10pt")
+t3 = p.text(zmin+1.5, 1.7, text=['u = {:.1e} m/s'.format(velocity_mps)], text_align="left", text_font_size="10pt")
 
 # Set up toggle button & callback function
 def toggle_handler(active):
