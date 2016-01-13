@@ -41,22 +41,22 @@ l_forward = p.line(z, v1, line_width=2, color=color_forward_wave, line_alpha=0.5
 l_reverse = p.line(z, v2, line_width=2, color=color_reverse_wave, line_alpha=0.5)
 p.xaxis.axis_label = "z (m)"
 p.yaxis.axis_label = "Voltage (V)"
-t1 = p.text(zmin+1.5, 1.0, text=['{} {}'.format(l_forward.glyph.line_alpha,l_reverse.glyph.line_alpha)],
+t1 = p.text(zmin+1.5, 1.5, text=['f = {} MHz'.format(freq_Hz/1.e6)],
             text_align="left", text_font_size="10pt")
-#t2 = p.text(zmin+1.5, 1.0-0.08, text=['t = {} s'.format(current_time)], text_align="left", text_font_size="10pt")
-t3 = p.text(zmin+1.5, 1.0-0.16, text=['Stopped'], text_align="left", text_font_size="10pt")
+t2 = p.text(zmin+1.5, 1.3, text=['\u03BB = {} m'.format(wavelength_m)], text_align="left", text_font_size="10pt")
+#t3 = p.text(zmin+1.5, 1.0-0.16, text=['Stopped'], text_align="left", text_font_size="10pt")
 
 # Set up toggle button & callback function
 def toggle_handler(active):
     if active:
         toggle.label = 'Stop'
         checkbox_group.disabled = True
-        t3.data_source.data["text"] = ['Running']
+        #t3.data_source.data["text"] = ['Running']
         curdoc().add_periodic_callback(update, periodic_callback_time_ms)
     else:
         toggle.label = 'Start'
         checkbox_group.disabled = False
-        t3.data_source.data["text"] = ['Stopped']
+        #t3.data_source.data["text"] = ['Stopped']
         curdoc().remove_periodic_callback(update)
 toggle = Toggle(label="Start", type="success")
 toggle.on_click(toggle_handler)
@@ -85,7 +85,7 @@ def checkbox_group_handler(active):
         #l_reverse.glyph.line_color = color_reverse_wave
     else:
         l_reverse.glyph.line_alpha = 0.0
-    t1.data_source.data["text"] = ['{} {}'.format(l_forward.glyph.line_alpha,l_reverse.glyph.line_alpha)]
+    #t1.data_source.data["text"] = ['{} {}'.format(l_forward.glyph.line_alpha,l_reverse.glyph.line_alpha)]
 checkbox_group = CheckboxGroup(
         labels=["Forward Propagating Wave", "Reverse Propagating Wave"], active=[0, 1])
 checkbox_group.on_click(checkbox_group_handler)
