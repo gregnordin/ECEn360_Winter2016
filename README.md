@@ -18,6 +18,11 @@ BYU ECEn 360 Electromagnetics - Winter 2016
 
 **Alternative: Download All Files With Git**:
 
+1. If you don't have git installed on your computer, install it.
+    1. Windows: download and install [Git for Windows](https://git-for-windows.github.io/)
+    1. Mac OS X 10.11:
+        1. Go to Terminal and type `git --version`. If git is not installed a dialog box will pop up. Click command line tools.
+    1. Linux: I think all linux distros have git already installed
 1. From the command line on your computer, navigate to where you want to download the repository.
 2. Execute: git clone https://github.com/gregnordin/ECEn360_Winter2016.git
 3. This will create the directory "ECEn360_Winter2016" and populate it with all of the files in this repository.
