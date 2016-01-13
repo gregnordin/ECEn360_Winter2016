@@ -97,7 +97,7 @@ def update_alpha(attrname, old, new):
     if not toggle.active:
         l_forward.data_source.data["y"] = forward_wave()
         l_reverse.data_source.data["y"] = reverse_wave()
-alpha_slider = Slider(title="Alpha (1/m)", value=0.0, start=0.0, end=0.25, step=0.005)
+alpha_slider = Slider(title="Attenuation Constant, \u03B1 (1/m)", value=0.0, start=0.0, end=0.25, step=0.005)
 alpha_slider.on_change('value', update_alpha)
 
 # Set up slider & callback function for reflection_coef
@@ -107,11 +107,11 @@ def update_gamma(attrname, old, new):
     if not toggle.active:
         l_forward.data_source.data["y"] = forward_wave()
         l_reverse.data_source.data["y"] = reverse_wave()
-gamma_slider = Slider(title="Reflection Coefficient", value=0.0, start=-1.0, end=1.0, step=0.01)
+gamma_slider = Slider(title="Reflection Coefficient, \u0393", value=reflection_coef, start=-1.0, end=1.0, step=0.01)
 gamma_slider.on_change('value', update_gamma)
 
 # Set up layout
-layout = hplot(p, VBox(toggle, button_reset, checkbox_group, alpha_slider, gamma_slider, height=580), width=900)
+layout = hplot(p, VBox(toggle, button_reset, checkbox_group, alpha_slider, gamma_slider, height=580), width=980)
 
 # Create callback function for periodic callback
 def update():
