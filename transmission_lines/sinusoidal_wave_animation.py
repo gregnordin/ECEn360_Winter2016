@@ -1,5 +1,5 @@
 from bokeh.plotting import figure, curdoc, vplot,  hplot
-from bokeh.models.widgets import Button, Toggle, Slider, VBoxForm, HBox, VBox
+from bokeh.models.widgets import Button, Toggle, Slider, VBoxForm, HBox, VBox, CheckboxGroup
 from bokeh.driving import linear
 import numpy as np
 
@@ -26,6 +26,8 @@ numpnts = 500
 periodic_callback_time_ms = 16
 z = np.linspace(zmin,zmax,numpnts)
 z_norm = z/wavelength_m
+color_forward_wave = 'blue'
+color_reverse_wave = 'red'
 v1 = forward_wave()
 v2 = reverse_wave()
 
@@ -33,13 +35,14 @@ ii = 0
 
 # Set up plot
 p = figure(plot_width=600, plot_height=400, x_range=(zmin,zmax), y_range=(-2.1,2.1), \
-           title="Forward & Reverse Pulses", \
+           title="Forward & Reverse Sinusoidal Voltages", \
            tools="pan,box_zoom,resize,save,reset")
-l_forward = p.line(z, v1, line_width=2, color='blue', line_alpha=0.5)
-l_reverse = p.line(z, v2, line_width=2, color='red', line_alpha=0.5)
+l_forward = p.line(z, v1, line_width=2, color=color_forward_wave, line_alpha=0.5)
+l_reverse = p.line(z, v2, line_width=2, color=color_reverse_wave, line_alpha=0.5)
 p.xaxis.axis_label = "z (m)"
 p.yaxis.axis_label = "Voltage (V)"
-#t1 = p.text(zmin+1.5, 1.0, text=['u = {} m/s'.format(u)], text_align="left", text_font_size="10pt")
+t1 = p.text(zmin+1.5, 1.0, text=['{} {}'.format(l_forward.glyph.line_color,l_reverse.glyph.line_color)],
+            text_align="left", text_font_size="10pt")
 #t2 = p.text(zmin+1.5, 1.0-0.08, text=['t = {} s'.format(current_time)], text_align="left", text_font_size="10pt")
 t3 = p.text(zmin+1.5, 1.0-0.16, text=['Stopped'], text_align="left", text_font_size="10pt")
 
@@ -68,19 +71,36 @@ def reset_handler():
 button_reset = Button(label="Reset", type="success")
 button_reset.on_click(reset_handler)
 
+# Set up checkboxes to show/hide forward & reverse propagating waves
+def checkbox_group_handler(active):
+    if not toggle.active:
+        if 0 in checkbox_group.active:
+            l_forward.glyph.line_alpha = 0.5
+            #l_forward.glyph.line_color = color_forward_wave
+        else:
+            l_forward.glyph.line_alpha = 0.0
+        if 1 in checkbox_group.active:
+            l_reverse.glyph.line_alpha = 0.5
+            #l_reverse.glyph.line_color = color_reverse_wave
+        else:
+            l_reverse.glyph.line_alpha = 0.0
+        t1.data_source.data["text"] = ['{} {}'.format(l_forward.glyph.line_color,l_reverse.glyph.line_color)]
+checkbox_group = CheckboxGroup(
+        labels=["Forward Propagating Wave", "Reverse Propagating Wave"], active=[0, 1])
+checkbox_group.on_click(checkbox_group_handler)
+
 # Set up slider & callback function
 def update_alpha(attrname, old, new):
-    global alpha, current_time
+    global alpha
     alpha = alpha_slider.value
     if not toggle.active:
         l_forward.data_source.data["y"] = forward_wave()
         l_reverse.data_source.data["y"] = reverse_wave()
-    #t1.data_source.data["text"] = ['u = {} m/s'.format(u)]
 alpha_slider = Slider(title="Alpha (1/m)", value=0.0, start=0.0, end=0.25, step=0.005)
 alpha_slider.on_change('value', update_alpha)
 
 # Set up layout
-layout = hplot(p, VBox(toggle, button_reset, alpha_slider, height=400), width=900)
+layout = hplot(p, VBox(toggle, button_reset, checkbox_group, alpha_slider, height=480), width=900)
 
 # Create callback function for periodic callback
 def update():
