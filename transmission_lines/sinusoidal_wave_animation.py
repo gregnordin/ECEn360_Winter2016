@@ -28,6 +28,7 @@ z = np.linspace(zmin,zmax,numpnts)
 z_norm = z/wavelength_m
 color_forward_wave = 'blue'
 color_reverse_wave = 'red'
+alpha_forward_reverse_waves = 0.5
 color_sum_wave = 'black'
 alpha_sum_wave = 0.3
 v1 = forward_wave()
@@ -40,9 +41,10 @@ ii = 0
 p = figure(plot_width=600, plot_height=400, x_range=(zmin,zmax), y_range=(-2.1,2.1), \
            title="Forward & Reverse Sinusoidal Voltages", \
            tools="pan,box_zoom,save,reset")
-l_forward = p.line(z, v1, line_width=2, color=color_forward_wave, line_alpha=0.5)
-l_reverse = p.line(z, v2, line_width=2, color=color_reverse_wave, line_alpha=0.5)
+l_forward = p.line(z, v1, line_width=2, color=color_forward_wave, line_alpha=alpha_forward_reverse_waves)
+l_reverse = p.line(z, v2, line_width=2, color=color_reverse_wave, line_alpha=alpha_forward_reverse_waves)
 l_sum = p.line(z, vsum, line_width=2, color=color_sum_wave, line_alpha=0.0)
+#l_sum.glyph.visible = False
 p.xaxis.axis_label = "z (m)"
 p.yaxis.axis_label = "Voltage (V)"
 t1 = p.text(zmin+1.5, 1.5, text=['f = {} MHz'.format(freq_Hz/1.e6)],
@@ -82,16 +84,22 @@ button_reset.on_click(reset_handler)
 # Set up checkboxes to show/hide forward & reverse propagating waves
 def checkbox_group_handler(active):
     if 0 in active:
-        l_forward.glyph.line_alpha = 0.5
+        #l_forward.glyph.visible = True
+        l_forward.glyph.line_alpha = alpha_forward_reverse_waves
     else:
+        #l_forward.glyph.visible = False
         l_forward.glyph.line_alpha = 0.0
     if 1 in active:
-        l_reverse.glyph.line_alpha = 0.5
+        #l_reverse.glyph.visible = True
+        l_reverse.glyph.line_alpha = alpha_forward_reverse_waves
     else:
+        #l_reverse.glyph.visible = False
         l_reverse.glyph.line_alpha = 0.0
     if 2 in active:
+        #l_sum.glyph.visible = True
         l_sum.glyph.line_alpha = alpha_sum_wave
     else:
+        #l_sum.glyph.visible = False
         l_sum.glyph.line_alpha = 0.0
     #t1.data_source.data["text"] = ['{} {}'.format(l_forward.glyph.line_alpha,l_reverse.glyph.line_alpha)]
 checkbox_group = CheckboxGroup(
