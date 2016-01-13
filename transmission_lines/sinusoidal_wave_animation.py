@@ -41,7 +41,7 @@ l_forward = p.line(z, v1, line_width=2, color=color_forward_wave, line_alpha=0.5
 l_reverse = p.line(z, v2, line_width=2, color=color_reverse_wave, line_alpha=0.5)
 p.xaxis.axis_label = "z (m)"
 p.yaxis.axis_label = "Voltage (V)"
-t1 = p.text(zmin+1.5, 1.0, text=['{} {}'.format(l_forward.glyph.line_color,l_reverse.glyph.line_color)],
+t1 = p.text(zmin+1.5, 1.0, text=['{} {}'.format(l_forward.glyph.line_alpha,l_reverse.glyph.line_alpha)],
             text_align="left", text_font_size="10pt")
 #t2 = p.text(zmin+1.5, 1.0-0.08, text=['t = {} s'.format(current_time)], text_align="left", text_font_size="10pt")
 t3 = p.text(zmin+1.5, 1.0-0.16, text=['Stopped'], text_align="left", text_font_size="10pt")
@@ -50,10 +50,12 @@ t3 = p.text(zmin+1.5, 1.0-0.16, text=['Stopped'], text_align="left", text_font_s
 def toggle_handler(active):
     if active:
         toggle.label = 'Stop'
+        checkbox_group.disabled = True
         t3.data_source.data["text"] = ['Running']
         curdoc().add_periodic_callback(update, periodic_callback_time_ms)
     else:
         toggle.label = 'Start'
+        checkbox_group.disabled = False
         t3.data_source.data["text"] = ['Stopped']
         curdoc().remove_periodic_callback(update)
 toggle = Toggle(label="Start", type="success")
@@ -73,18 +75,17 @@ button_reset.on_click(reset_handler)
 
 # Set up checkboxes to show/hide forward & reverse propagating waves
 def checkbox_group_handler(active):
-    if not toggle.active:
-        if 0 in checkbox_group.active:
-            l_forward.glyph.line_alpha = 0.5
-            #l_forward.glyph.line_color = color_forward_wave
-        else:
-            l_forward.glyph.line_alpha = 0.0
-        if 1 in checkbox_group.active:
-            l_reverse.glyph.line_alpha = 0.5
-            #l_reverse.glyph.line_color = color_reverse_wave
-        else:
-            l_reverse.glyph.line_alpha = 0.0
-        t1.data_source.data["text"] = ['{} {}'.format(l_forward.glyph.line_color,l_reverse.glyph.line_color)]
+    if 0 in active:
+        l_forward.glyph.line_alpha = 0.5
+        #l_forward.glyph.line_color = color_forward_wave
+    else:
+        l_forward.glyph.line_alpha = 0.0
+    if 1 in active:
+        l_reverse.glyph.line_alpha = 0.5
+        #l_reverse.glyph.line_color = color_reverse_wave
+    else:
+        l_reverse.glyph.line_alpha = 0.0
+    t1.data_source.data["text"] = ['{} {}'.format(l_forward.glyph.line_alpha,l_reverse.glyph.line_alpha)]
 checkbox_group = CheckboxGroup(
         labels=["Forward Propagating Wave", "Reverse Propagating Wave"], active=[0, 1])
 checkbox_group.on_click(checkbox_group_handler)
