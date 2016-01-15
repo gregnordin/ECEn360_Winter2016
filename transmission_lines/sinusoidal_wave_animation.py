@@ -10,6 +10,8 @@ def forward_wave():
 def reverse_wave():
     return (np.exp(-alpha*(z[-1] - zmin)) * reflection_coef) * \
            np.exp(alpha*z) * np.cos(twopi * (current_time + z_norm))
+def standing_wave():
+    return np.sqrt(1.0 + 2*reflection_coef*np.cos(2.0*twopi*z_norm) + reflection_coef**2)
 
 # Initializations
 freq_Hz = 100e6
@@ -34,6 +36,9 @@ alpha_sum_wave = 0.3
 v1 = forward_wave()
 v2 = reverse_wave()
 vsum = v1 + v2
+color_standing_wave = 'green'
+alpha_standing_wave = 0.3
+vstanding = standing_wave()
 
 ii = 0
 
@@ -44,6 +49,7 @@ p = figure(plot_width=600, plot_height=400, x_range=(zmin,zmax), y_range=(-2.1,2
 l_forward = p.line(z, v1, line_width=2, color=color_forward_wave, line_alpha=alpha_forward_reverse_waves)
 l_reverse = p.line(z, v2, line_width=2, color=color_reverse_wave, line_alpha=alpha_forward_reverse_waves)
 l_sum = p.line(z, vsum, line_width=2, color=color_sum_wave, line_alpha=0.0)
+l_standing = p.line(z, vstanding, line_width=2, color=color_standing_wave, line_alpha=0.0)
 #l_sum.glyph.visible = False
 p.xaxis.axis_label = "z (m)"
 p.yaxis.axis_label = "Voltage (V)"
@@ -83,6 +89,7 @@ button_reset.on_click(reset_handler)
 
 # Set up checkboxes to show/hide forward & reverse propagating waves
 def checkbox_group_handler(active):
+    global alpha, alpha_slider
     if 0 in active:
         #l_forward.glyph.visible = True
         l_forward.glyph.line_alpha = alpha_forward_reverse_waves
@@ -101,9 +108,18 @@ def checkbox_group_handler(active):
     else:
         #l_sum.glyph.visible = False
         l_sum.glyph.line_alpha = 0.0
+    if 3 in active:
+        alpha = 0.0
+        alpha_slider.value = 0.0
+        alpha_slider.disabled = True
+        l_standing.glyph.line_alpha = alpha_standing_wave
+    else:
+        alpha_slider.disabled = False
+        l_standing.glyph.line_alpha = 0.0
     #t1.data_source.data["text"] = ['{} {}'.format(l_forward.glyph.line_alpha,l_reverse.glyph.line_alpha)]
 checkbox_group = CheckboxGroup(
-        labels=["Forward Propagating Wave", "Reverse Propagating Wave", "Sum of Waves"], active=[0, 1])
+        labels=["Forward Propagating Wave", "Reverse Propagating Wave", "Sum of Waves",
+                "Standing Wave (valid only for \u03B1=0)"], active=[0, 1])
 checkbox_group.on_click(checkbox_group_handler)
 
 # Set up slider & callback function
@@ -127,6 +143,7 @@ def update_gamma(attrname, old, new):
         l_reverse.data_source.data["y"] = reverse_wave()
         l_sum.data_source.data["y"] = l_forward.data_source.data["y"] + \
                                       l_reverse.data_source.data["y"]
+        l_standing.data_source.data["y"] = standing_wave()
 gamma_slider = Slider(title="Reflection Coefficient, \u0393", value=reflection_coef, start=-1.0, end=1.0, step=0.01)
 gamma_slider.on_change('value', update_gamma)
 
@@ -143,4 +160,4 @@ def update():
         l_reverse.data_source.data["y"] = reverse_wave()
         l_sum.data_source.data["y"] = l_forward.data_source.data["y"] + \
                                       l_reverse.data_source.data["y"]
-        #t2.data_source.data["text"] = ['t = {:.3f} s'.format(current_time)]
+        l_standing.data_source.data["y"] = standing_wave()
