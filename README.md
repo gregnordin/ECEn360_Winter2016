@@ -31,7 +31,7 @@ BYU ECEn 360 Electromagnetics - Winter 2016
 
 **View IPython Notebooks Without Installing Any Software**:
 
-Click [here](http://nbviewer.ipython.org/github/gregnordin/ECEn360_W15/tree/master/) for the transmission line ipython notebooks. The notebook files end in ".ipynb". Note that clicking on a notebook file renders a **static** html page in your browser (made with nbviewer.ipython.org). You therefore can't execute any of the commands, but you will be able to see the notebook contents without any problem.
+Click [here](http://nbviewer.ipython.org/github/gregnordin/ECEn360_W15/tree/master/) for the transmission line ipython notebooks. The notebook files end in ".ipynb". Note that clicking on a notebook file renders a **static** html page in your browser (made with nbviewer.ipython.org). You therefore can't execute any of the commands, but you will be able to see the notebook contents.
 
 **How to Use IPython Notebooks**:
 
@@ -42,4 +42,4 @@ Click [here](http://nbviewer.ipython.org/github/gregnordin/ECEn360_W15/tree/mast
 
 **Matlab and Python Homework Problems**
 
-Each homework assignment will contain at least one problem that must be solved on a computer with either Matlab or Python. The intent is to continue the initiative begun in your sophmore-level courses to have you learn at least one programming tool. Links to computer homework problems are provided in each homework assignment. If you are interested, all of the computer homework problems are consolidated on [this page](http://ecenmatlab.groups.et.byu.net/doku.php?id=ecen_360_assignments).
+Each homework assignment will contain at least one problem that must be solved on a computer with either Matlab or Python. The intent is to continue the initiative begun in your sophmore-level courses to have you learn at least one programming tool. Links to computer homework problems are provided in each homework assignment. If you are interested, all of the computer homework problems are consolidated on [this page](http://ecenmatlab.groups.et.byu.net/doku.php?id=ecen_360_assignments). You can find matlab learning resources and links to pages for other classes in our undergraduate curriculum [here](http://ecenmatlab.groups.et.byu.net/doku.php?id=start).
