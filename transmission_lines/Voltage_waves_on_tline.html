@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html>
+<meta  content="text/html; charset=UTF-8"  http-equiv="content-type">
+<head>
+    <title>T-line voltage</title>
+
+    <style>
+        fieldset {background-color:lightgrey;
+                  width:400px;
+                  margin:auto;
+                  text-align:left;}
+        legend {background-color:white;
+                border:2px solid grey;
+                padding-left: 5px;
+                padding-right: 5px;
+               }
+        button {background-color:lightblue;
+               border:2px solid grey;
+               padding-left: 5px;
+               padding-right: 5px;
+              }
+    </style>
+
+</head>
+<body>
+<div style="text-align:center" width:700px margin:auto>
+    <h2>Voltage on a Transmission Line</h2>
+    <canvas id="canvas" width="600" height="300"></canvas>
+    <p> </p>
+    <button id="idTogButton" onclick="toggleButton()">Start</button>
+    <button id="idResetButton" onclick="resetButton()">Reset</button>
+    <br />
+    <br />
+    <fieldset>
+        <legend>Select type of transmission line</legend>
+            <input type="radio" name="tlinetype" value="Lossless" checked="checked"
+               onclick="handleClick(this);" />Lossless<br />
+            <input type="radio" name="tlinetype" value="Lossy" onclick="handleClick(this);" />Lossy<br />
+    </fieldset>
+
+    <fieldset>
+    <legend>Select which are visible</legend>
+        <input type="checkbox" id="chkForward" checked onclick="chkForwardCallback()" />
+            <label for = "chkForward">Forward voltage wave</label><br />
+        <input type="checkbox" id="chkReverse" onclick="chkReverseCallback()" />
+            <label for="chkReverse">Reverse voltage wave</label><br />
+        <input type="checkbox" id="chkSum" onclick="chkSumCallback()" />
+            <label for="chkSum">Total voltage wave (summed forward and reverse)</label><br />
+        <input type="checkbox" id="chkStanding" onclick="chkStandingCallback()" />
+            <label for="chkStanding">Standing wave (only for lossless transmission line)</label><br />
+    </fieldset>
+
+    <fieldset>
+        <legend>Parameter controls</legend>
+        <label for="idAlpha">Attenuation Constant, &#945; (1/m)</label>
+        <input type="range" id="idAlpha" min="0.0" max="0.25" value="0.0" step="0.005" oninput="alphaSliderUpdate(value)">
+        <output for="idAlpha" id="idAlphaValue">0</output><br />
+        <label for="idGamma">Reflection Coefficient, &#915;</label>
+        <input type="range" id="idGamma" min="-1" max="1" value="1" step="0.01" oninput="gammaSliderUpdate(value)">
+        <output for="idGamma" id="idGammaValue">1</output><br />
+    </fieldset>
+</div>
+
+    <p id="demo"></p>
+    <p id="demo2"></p>
+
+<script>
+
+function handleClick(myRadio) {
+    if (myRadio.value == "Lossless") {
+        document.getElementById("idAlpha").value = 0;
+        document.getElementById("idAlphaValue").innerHTML = "0";
+        document.getElementById("idAlpha").disabled = true;
+        alpha = 0;
+        document.getElementById("chkStanding").disabled = false;
+    } else {
+        document.getElementById("idAlpha").disabled = false;
+        document.getElementById("chkStanding").checked = false;
+        document.getElementById("chkStanding").disabled = true;
+        v_standing.isVisible = false;
+    }
+    drawAll();
+}
+
+function alphaSliderUpdate(value) {
+	document.querySelector('#idAlphaValue').value = value;
+    alpha = value;
+    if (!timerRunning) drawAll();
+}
+
+function gammaSliderUpdate(value) {
+	document.querySelector('#idGammaValue').value = value;
+    reflection_coef = value;
+    if (!timerRunning) drawAll();
+}
+
+var canvas = document.getElementById("canvas");
+var ctx = canvas.getContext("2d");
+var frac_max_x = 0.87;
+var frac_max_y = 0.87;
+var axes={};
+axes.x0 = canvas.width * (frac_max_x + (1-frac_max_x)/2);  // x0 pixels from left to x=0
+axes.y0 = canvas.height*0.5; // y0 pixels from top to y=0
+axes.zmin = -20.;
+axes.zmax = 0.;
+axes.vmin = -2.1;
+axes.vmax = 2.1;
+axes.zrange = axes.zmax - axes.zmin;
+axes.vrange = axes.vmax - axes.vmin;
+axes.zscale = canvas.width * frac_max_x / axes.zrange;  // # canvas pixels per unit in z
+axes.vscale = canvas.height * frac_max_y / axes.vrange;  // # canvas pixels per unit in v
+var npnts = 320;
+var twopi = 2.0*Math.PI;
+var freq_Hz = 100e6;
+var velocity_mps = 2e8;
+var wavelength_m = velocity_mps / freq_Hz;
+var alpha = 0.0;
+reflection_coef = 1.0;
+var current_time = 0.0;
+var n_samp_one_temporal_cycle = 60;
+var z = [];
+var z_norm = [];
+var v_forward = {data:[], isVisible:true, strokeStyle:"rgba(0,0,255,0.5)",};
+var v_reverse = {data:[], isVisible:false, strokeStyle:"rgba(255,0,0,0.5)",};
+var v_sum = {data:[], isVisible:false, strokeStyle:"rgba(0,153,51,0.5)",};
+var v_standing = {data:[], isVisible:false, strokeStyle:"rgba(0,0,0,0.5)",};
+// set up data arrays
+for (var i = 0; i <= npnts; i++) {
+    z.push((axes.zmax-axes.zmin)*i/npnts + axes.zmin);
+    z_norm.push(z[i]/wavelength_m);
+    v_forward.data.push(0);
+    v_reverse.data.push(0);
+    v_sum.data.push(0);
+    v_standing.data.push(0);
+};
+myData = [v_forward, v_reverse, v_sum, v_standing]
+
+//ctx.fillStyle = "#ccffff";
+//ctx.fillRect(0,0,canvas.width,canvas.height);
+
+var framecounter = 0;
+document.getElementById("idAlpha").disabled = true;
+drawAll();
+var timerRunning = false;
+redrawAll();
+
+function drawAll() {
+    calcForwardWave();
+    calcReverseWave();
+    calcSumWave();
+    calcStandingWave();
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    drawAxes();
+    for(var i=0;i<myData.length;i++){
+        if(myData[i].isVisible) drawLinePath(myData[i]);
+    }
+    ctx.save();
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(to_x(-19.3),to_y(2.27),100,60);
+    ctx.strokeStyle = "#c0c0c0";
+    ctx.strokeRect(to_x(-19.3),to_y(2.27),100,60);
+    ctx.restore();
+    ctx.textAlign = "left";
+    ctx.textBaseline = "middle";
+    ctx.font = "15px Arial";
+    ctx.fillStyle = "#000000";
+    ctx.fillText("f = " + freq_Hz/1e6 + " MHz",to_x(-19),to_y(2.1));
+    ctx.fillText("u = " + velocity_mps.toExponential() + " m/s",to_x(-19),to_y(1.8));
+    ctx.fillText("\u03BB = u/f = " + wavelength_m + " m",to_x(-19),to_y(1.5));
+    ctx.restore();
+}
+
+function redrawAll() {
+    if (timerRunning) {
+        framecounter++;
+        current_time = framecounter / n_samp_one_temporal_cycle;
+        //document.getElementById("demo").innerHTML = framecounter;
+        drawAll();
+    };
+    requestAnimationFrame(redrawAll);
+}
+
+// coordinate transformation from plot coordinates to canvas coordinates
+function to_x(xplot) {return xplot*axes.zscale + axes.x0;}
+function to_y(yplot) {return -yplot*axes.vscale + axes.y0;}
+
+function calcForwardWave() {
+    for (var i=0;i<v_forward.data.length;i++) {
+        v_forward.data[i] = Math.exp(-alpha*(z[i] - z[0])) *
+                            Math.cos(twopi * (current_time - z_norm[i]));
+    }
+}
+
+function calcReverseWave() {
+    for (var i=0;i<v_reverse.data.length;i++) {
+        var z_load = z[z.length-1];
+        v_reverse.data[i] = Math.exp(-alpha*(z_load - z[0])) * reflection_coef *
+                            Math.exp(alpha*z[i]) *
+                            Math.cos(twopi * (current_time + z_norm[i]));
+    }
+}
+
+function calcSumWave() {
+    for (var i=0;i<v_sum.data.length;i++) {
+        v_sum.data[i] = v_forward.data[i] + v_reverse.data[i];
+    }
+}
+
+function calcStandingWave() {
+    for (var i=0;i<v_standing.data.length;i++) {
+        v_standing.data[i] = Math.sqrt(1.0 + 2*reflection_coef*Math.cos(2.0*twopi*z_norm[i]) + Math.pow(reflection_coef,2));
+    }
+}
+
+function drawLinePath(dataObj) {
+    ctx.beginPath();
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = dataObj.strokeStyle;
+    ctx.moveTo(to_x(z[0]),to_y(dataObj.data[0]));
+    for (var i=1;i<=dataObj.data.length;i++) {
+        ctx.lineTo(to_x(z[i]),to_y(dataObj.data[i]));
+    }
+    ctx.stroke();
+}
+
+function drawAxes() {
+    var x0=axes.x0, w=ctx.canvas.width;
+    var y0=axes.y0, h=ctx.canvas.height;
+    ctx.beginPath();
+    ctx.strokeStyle = "rgb(0,0,0)";
+    ctx.lineWidth=0.5;
+    ctx.moveTo(to_x(axes.zmin),to_y(0)); ctx.lineTo(to_x(axes.zmax),to_y(0)); // z axis
+    ctx.moveTo(to_x(0),to_y(axes.vmin)); ctx.lineTo(to_x(0),to_y(axes.vmax)); // v axis
+    for (var i = -1; i > axes.zmin; i--) { // minor tic marks
+        ctx.moveTo(to_x(i*1.0),to_y(0.06)); ctx.lineTo(to_x(i*1.0),to_y(-0.06));
+    }
+    ctx.moveTo(to_x(axes.zmin*0.25),to_y(0.1)); ctx.lineTo(to_x(axes.zmin*0.25),to_y(-0.1)); // tic mark
+    ctx.moveTo(to_x(axes.zmin*0.5),to_y(0.1)); ctx.lineTo(to_x(axes.zmin*0.5),to_y(-0.1)); // tic mark
+    ctx.moveTo(to_x(axes.zmin*0.75),to_y(0.1)); ctx.lineTo(to_x(axes.zmin*0.75),to_y(-0.1)); // tic mark
+    ctx.moveTo(to_x(axes.zmin),to_y(0.1)); ctx.lineTo(to_x(axes.zmin),to_y(-0.1)); // tic mark
+    for (var i=-2; i <= 2; i++) {
+        if (i != 0) {ctx.moveTo(to_x(-0.2),to_y(i)); ctx.lineTo(to_x(0.2),to_y(i));}
+        else {ctx.moveTo(to_x(0),to_y(i)); ctx.lineTo(to_x(0.2),to_y(i));} // tic mark
+    }
+
+    ctx.stroke();
+    ctx.textAlign = "left";
+    ctx.textBaseline = "middle";
+    ctx.font = "15px Arial";
+    ctx.fillStyle = "#000000";
+    ctx.fillText("z (m)",to_x(-21.5),to_y(0));
+    ctx.textAlign = "center";
+    //ctx.fillText("Voltage (V)",to_x(0.0),to_y(axes.vmax*1.09));
+    ctx.save();
+    ctx.translate(to_x(0),to_y(0));
+    ctx.rotate(Math.PI/2);
+    ctx.fillText("Voltage (V)",0,-30);
+    ctx.restore();
+    ctx.font = "12px Arial";
+    ctx.fillText("-5",to_x(axes.zmin*0.25),to_y(-0.25));
+    ctx.fillText("-10",to_x(axes.zmin*0.5),to_y(-0.25));
+    ctx.fillText("-15",to_x(axes.zmin*0.75),to_y(-0.25));
+    ctx.fillText("-20",to_x(axes.zmin),to_y(-0.25));
+    ctx.fillText("-2",to_x(0.5),to_y(-2));
+    ctx.fillText("-1",to_x(0.5),to_y(-1));
+    ctx.fillText("0",to_x(0.5),to_y(0));
+    ctx.fillText("1",to_x(0.5),to_y(1));
+    ctx.fillText("2",to_x(0.5),to_y(2));
+}
+
+function toggleButton() {
+    if (timerRunning) {
+        timerRunning = false;
+        //document.getElementById("demo2").innerHTML = "Timer is stopped";
+        document.getElementById("idTogButton").innerHTML = "Start";
+    } else {
+        timerRunning = true;
+        //document.getElementById("demo2").innerHTML = "Timer is running";
+        document.getElementById("idTogButton").innerHTML = "Stop";
+    };
+}
+
+function resetButton() {
+    framecounter = 0;
+    current_time = framecounter / n_samp_one_temporal_cycle;
+    //document.getElementById("demo").innerHTML = framecounter;
+    drawAll();
+    //redrawAll();
+};
+
+function chkForwardCallback() {
+    if (document.getElementById('chkForward').checked) {
+        myData[0].isVisible = true;
+    } else {
+        myData[0].isVisible = false;
+    }
+    drawAll();
+}
+
+function chkReverseCallback() {
+    if (document.getElementById('chkReverse').checked) {
+        myData[1].isVisible = true;
+    } else {
+        myData[1].isVisible = false;
+    }
+    drawAll();
+}
+
+function chkSumCallback() {
+    if (document.getElementById('chkSum').checked) {
+        myData[2].isVisible = true;
+    } else {
+        myData[2].isVisible = false;
+    }
+    drawAll();
+}
+
+function chkStandingCallback() {
+    if (document.getElementById('chkStanding').checked) {
+        myData[3].isVisible = true;
+    } else {
+        myData[3].isVisible = false;
+    }
+    drawAll();
+}
+
+
+</script>
+
+</body>
+</html>
