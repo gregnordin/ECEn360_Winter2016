@@ -111,7 +111,7 @@ function freqSliderUpdate(value) {
     freq_Hz = value*1e6;
     wavelength_m = velocity_mps / freq_Hz;
     for (var i = 0; i <= npnts; i++) {
-        z_norm[i] = (z[i]/wavelength_m);
+        z_norm[i] = z[i]/wavelength_m;
     };
     if (!timerRunning) drawAll();
 }
@@ -182,7 +182,7 @@ function drawAll() {
     ctx.fillStyle = "#ffffff";
     ctx.fillRect(to_x(-19.3),to_y(2.27),100,60);
     ctx.strokeStyle = "#c0c0c0";
-    ctx.strokeRect(to_x(-19.3),to_y(2.27),110,60);
+    ctx.strokeRect(to_x(-19.3),to_y(2.27),113,60);
     ctx.restore();
     ctx.textAlign = "left";
     ctx.textBaseline = "middle";
@@ -197,7 +197,7 @@ function drawAll() {
 function redrawAll() {
     if (timerRunning) {
         framecounter++;
-        current_time = framecounter / n_samp_one_temporal_cycle;
+        current_time = framecounter / n_samp_one_temporal_cycle * (freq_Hz/100e6);
         //document.getElementById("demo").innerHTML = framecounter;
         drawAll();
     };
