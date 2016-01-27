@@ -6,7 +6,7 @@
 
     <style>
         fieldset {background-color:lightgrey;
-                  width:400px;
+                  width:450px;
                   margin:auto;
                   text-align:left;}
         legend {background-color:white;
@@ -39,7 +39,7 @@
     </fieldset>
 
     <fieldset>
-    <legend>Select which are visible</legend>
+        <legend>Select which are visible</legend>
         <input type="checkbox" id="chkForward" checked onclick="chkForwardCallback()" />
             <label for = "chkForward">Forward voltage wave</label><br />
         <input type="checkbox" id="chkReverse" onclick="chkReverseCallback()" />
@@ -55,9 +55,12 @@
         <label for="idAlpha">Attenuation Constant, &#945; (1/m)</label>
         <input type="range" id="idAlpha" min="0.0" max="0.25" value="0.0" step="0.005" oninput="alphaSliderUpdate(value)">
         <output for="idAlpha" id="idAlphaValue">0</output><br />
-        <label for="idGamma">Reflection Coefficient, &#915;</label>
-        <input type="range" id="idGamma" min="-1" max="1" value="1" step="0.01" oninput="gammaSliderUpdate(value)">
+        <label for="idGamma">Reflection Coefficient magnitude, |&#915;|</label>
+        <input type="range" id="idGamma" min="0" max="1" value="1" step="0.01" oninput="gammaSliderUpdate(value)">
         <output for="idGamma" id="idGammaValue">1</output><br />
+        <label for="idGammaphase">Reflection Coefficient phase (deg), arg(&#915;)</label>
+        <input type="range" id="idGammaphase" min="-180" max="180" value="0" step="1" oninput="gammaphaseSliderUpdate(value)">
+        <output for="idGammaphase" id="idGammaphaseValue">0</output><br />
     </fieldset>
 </div>
 
@@ -90,7 +93,13 @@ function alphaSliderUpdate(value) {
 
 function gammaSliderUpdate(value) {
 	document.querySelector('#idGammaValue').value = value;
-    reflection_coef = value;
+    reflection_coef_magn = value;
+    if (!timerRunning) drawAll();
+}
+
+function gammaphaseSliderUpdate(value) {
+	document.querySelector('#idGammaphaseValue').value = value;
+    reflection_coef_phase = value;
     if (!timerRunning) drawAll();
 }
 
@@ -109,15 +118,17 @@ axes.zrange = axes.zmax - axes.zmin;
 axes.vrange = axes.vmax - axes.vmin;
 axes.zscale = canvas.width * frac_max_x / axes.zrange;  // # canvas pixels per unit in z
 axes.vscale = canvas.height * frac_max_y / axes.vrange;  // # canvas pixels per unit in v
-var npnts = 320;
+var npnts = 733;
 var twopi = 2.0*Math.PI;
 var freq_Hz = 100e6;
 var velocity_mps = 2e8;
 var wavelength_m = velocity_mps / freq_Hz;
 var alpha = 0.0;
-reflection_coef = 1.0;
+var reflection_coef_magn = 1.0;
+var reflection_coef_phase = 0;
 var current_time = 0.0;
 var n_samp_one_temporal_cycle = 60;
+var degtorad = Math.PI/180;
 var z = [];
 var z_norm = [];
 var v_forward = {data:[], isVisible:true, strokeStyle:"rgba(0,0,255,0.5)",};
@@ -158,7 +169,7 @@ function drawAll() {
     ctx.fillStyle = "#ffffff";
     ctx.fillRect(to_x(-19.3),to_y(2.27),100,60);
     ctx.strokeStyle = "#c0c0c0";
-    ctx.strokeRect(to_x(-19.3),to_y(2.27),100,60);
+    ctx.strokeRect(to_x(-19.3),to_y(2.27),110,60);
     ctx.restore();
     ctx.textAlign = "left";
     ctx.textBaseline = "middle";
@@ -166,7 +177,7 @@ function drawAll() {
     ctx.fillStyle = "#000000";
     ctx.fillText("f = " + freq_Hz/1e6 + " MHz",to_x(-19),to_y(2.1));
     ctx.fillText("u = " + velocity_mps.toExponential() + " m/s",to_x(-19),to_y(1.8));
-    ctx.fillText("\u03BB = u/f = " + wavelength_m + " m",to_x(-19),to_y(1.5));
+    ctx.fillText("\u03BB = u/f = " + wavelength_m.toFixed(1) + " m",to_x(-19),to_y(1.5));
     ctx.restore();
 }
 
@@ -194,9 +205,9 @@ function calcForwardWave() {
 function calcReverseWave() {
     for (var i=0;i<v_reverse.data.length;i++) {
         var z_load = z[z.length-1];
-        v_reverse.data[i] = Math.exp(-alpha*(z_load - z[0])) * reflection_coef *
+        v_reverse.data[i] = Math.exp(-alpha*(z_load - z[0])) * reflection_coef_magn *
                             Math.exp(alpha*z[i]) *
-                            Math.cos(twopi * (current_time + z_norm[i]));
+                            Math.cos(twopi * (current_time + z_norm[i])+reflection_coef_phase*degtorad);
     }
 }
 
@@ -208,7 +219,9 @@ function calcSumWave() {
 
 function calcStandingWave() {
     for (var i=0;i<v_standing.data.length;i++) {
-        v_standing.data[i] = Math.sqrt(1.0 + 2*reflection_coef*Math.cos(2.0*twopi*z_norm[i]) + Math.pow(reflection_coef,2));
+        v_standing.data[i] = Math.sqrt(1.0 +
+            2*Math.abs(reflection_coef_magn)*Math.cos(2.0*twopi*z_norm[i]+reflection_coef_phase*degtorad) +
+            Math.pow(reflection_coef_magn,2));
     }
 }
 
