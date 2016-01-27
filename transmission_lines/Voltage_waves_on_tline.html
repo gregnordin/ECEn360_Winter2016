@@ -52,6 +52,9 @@
 
     <fieldset>
         <legend>Parameter controls</legend>
+        <label for="idFreq">Frequency (MHz)</label>
+        <input type="range" id="idFreq" min="10" max="100" value="100" step="1" oninput="freqSliderUpdate(value)">
+        <output for="idFreq" id="idFreqValue">100</output><br />
         <label for="idAlpha">Attenuation Constant, &#945; (1/m)</label>
         <input type="range" id="idAlpha" min="0.0" max="0.25" value="0.0" step="0.005" oninput="alphaSliderUpdate(value)">
         <output for="idAlpha" id="idAlphaValue">0</output><br />
@@ -61,9 +64,6 @@
         <label for="idGammaphase">Reflection Coefficient phase (deg), arg(&#915;)</label>
         <input type="range" id="idGammaphase" min="-180" max="180" value="0" step="1" oninput="gammaphaseSliderUpdate(value)">
         <output for="idGammaphase" id="idGammaphaseValue">0</output><br />
-        <label for="idFreq">Frequency (MHz)</label>
-        <input type="range" id="idFreq" min="10" max="100" value="100" step="1" oninput="freqSliderUpdate(value)">
-        <output for="idFreq" id="idFreqValue">100</output><br />
     </fieldset>
 </div>
 
@@ -88,6 +88,16 @@ function handleClick(myRadio) {
     drawAll();
 }
 
+function freqSliderUpdate(value) {
+	document.querySelector('#idFreqValue').value = value;
+    freq_Hz = value*1e6;
+    wavelength_m = velocity_mps / freq_Hz;
+    for (var i = 0; i <= npnts; i++) {
+        z_norm[i] = z[i]/wavelength_m;
+    };
+    if (!timerRunning) drawAll();
+}
+
 function alphaSliderUpdate(value) {
 	document.querySelector('#idAlphaValue').value = value;
     alpha = value;
@@ -103,16 +113,6 @@ function gammaSliderUpdate(value) {
 function gammaphaseSliderUpdate(value) {
 	document.querySelector('#idGammaphaseValue').value = value;
     reflection_coef_phase = value;
-    if (!timerRunning) drawAll();
-}
-
-function freqSliderUpdate(value) {
-	document.querySelector('#idFreqValue').value = value;
-    freq_Hz = value*1e6;
-    wavelength_m = velocity_mps / freq_Hz;
-    for (var i = 0; i <= npnts; i++) {
-        z_norm[i] = z[i]/wavelength_m;
-    };
     if (!timerRunning) drawAll();
 }
 
