@@ -6,7 +6,7 @@
 
     <style>
         fieldset {background-color:lightgrey;
-                  width:450px;
+                  width:500px;
                   margin:auto;
                   text-align:left;}
         legend {background-color:white;
@@ -52,18 +52,51 @@
 
     <fieldset>
         <legend>Parameter controls</legend>
-        <label for="idFreq">Frequency (MHz)</label>
-        <input type="range" id="idFreq" min="10" max="100" value="100" step="1" oninput="freqSliderUpdate(value)">
-        <output for="idFreq" id="idFreqValue">100</output><br />
-        <label for="idAlpha">Attenuation Constant, &#945; (1/m)</label>
-        <input type="range" id="idAlpha" min="0.0" max="0.25" value="0.0" step="0.005" oninput="alphaSliderUpdate(value)">
-        <output for="idAlpha" id="idAlphaValue">0</output><br />
-        <label for="idGamma">Reflection Coefficient magnitude, |&#915;|</label>
-        <input type="range" id="idGamma" min="0" max="1" value="1" step="0.01" oninput="gammaSliderUpdate(value)">
-        <output for="idGamma" id="idGammaValue">1</output><br />
-        <label for="idGammaphase">Reflection Coefficient phase (deg), arg(&#915;)</label>
-        <input type="range" id="idGammaphase" min="-180" max="180" value="0" step="1" oninput="gammaphaseSliderUpdate(value)">
-        <output for="idGammaphase" id="idGammaphaseValue">0</output><br />
+        <table cellspacing="0" cellpadding="0">
+          <tr>
+            <td align="right">
+                <label for="idFreq">Frequency &nbsp;</label>
+            </td>
+            <td>
+                <input type="range" id="idFreq" min="10" max="100" value="100"
+                       step="1" oninput="freqSliderUpdate(value)">
+                <output for="idFreq" id="idFreqValue">100 MHz</output>
+            </td>
+          </tr>
+          <tr>
+            <td align="right">
+                <label for="idAlpha">Attenuation Constant, &#945; &nbsp;
+                </label>
+            </td>
+            <td>
+                <input type="range" id="idAlpha" min="0.0" max="0.25"
+                    value="0.0" step="0.005" oninput="alphaSliderUpdate(value)">
+                <output for="idAlpha" id="idAlphaValue">0  m<sup>-1</sup></output>
+            </td>
+          </tr>
+          <tr>
+            <td align="right">
+                <label for="idGamma">
+                    Reflection Coefficient magnitude, |&#915;| &nbsp;</label>
+            </td>
+            <td>
+                <input type="range" id="idGamma" min="0" max="1" value="1"
+                       step="0.01" oninput="gammaSliderUpdate(value)">
+                <output for="idGamma" id="idGammaValue">1</output>
+            </td>
+          </tr>
+          <tr>
+            <td align="right">
+                <label for="idGammaphase">
+                    Reflection Coefficient phase, arg(&#915;) &nbsp;</label>
+            </td>
+            <td>
+                <input type="range" id="idGammaphase" min="-180" max="180"
+                    value="0" step="1" oninput="gammaphaseSliderUpdate(value)">
+                <output for="idGammaphase" id="idGammaphaseValue">0&deg;</output>
+            </td>
+          </tr>
+        </table>
     </fieldset>
 </div>
 
@@ -89,7 +122,7 @@ function handleClick(myRadio) {
 }
 
 function freqSliderUpdate(value) {
-	document.querySelector('#idFreqValue').value = value;
+	document.querySelector('#idFreqValue').innerHTML = value.toString() + " MHz";;
     freq_Hz = value*1e6;
     wavelength_m = velocity_mps / freq_Hz;
     for (var i = 0; i <= npnts; i++) {
@@ -99,7 +132,7 @@ function freqSliderUpdate(value) {
 }
 
 function alphaSliderUpdate(value) {
-	document.querySelector('#idAlphaValue').value = value;
+	document.querySelector('#idAlphaValue').innerHTML = value.toString() + " m<sup>-1</sup>";
     alpha = value;
     if (!timerRunning) drawAll();
 }
@@ -111,7 +144,7 @@ function gammaSliderUpdate(value) {
 }
 
 function gammaphaseSliderUpdate(value) {
-	document.querySelector('#idGammaphaseValue').value = value;
+	document.querySelector('#idGammaphaseValue').innerHTML = value.toString() + "&deg;";
     reflection_coef_phase = value;
     if (!timerRunning) drawAll();
 }
@@ -180,9 +213,10 @@ function drawAll() {
     }
     ctx.save();
     ctx.fillStyle = "#ffffff";
-    ctx.fillRect(to_x(-19.3),to_y(2.27),100,60);
+    var legend_boxwidth = 113;
+    ctx.fillRect(to_x(-19.3),to_y(2.27),legend_boxwidth,60);
     ctx.strokeStyle = "#c0c0c0";
-    ctx.strokeRect(to_x(-19.3),to_y(2.27),113,60);
+    ctx.strokeRect(to_x(-19.3),to_y(2.27),legend_boxwidth,60);
     ctx.restore();
     ctx.textAlign = "left";
     ctx.textBaseline = "middle";
