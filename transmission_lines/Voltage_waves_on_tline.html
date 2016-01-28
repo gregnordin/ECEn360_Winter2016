@@ -25,6 +25,8 @@
 <body>
 <div style="text-align:center" width:700px margin:auto>
     <h2>Voltage on a Transmission Line</h2>
+    <canvas id="canvas_tline_fig" width="500" height="100"></canvas>
+    <p> </p>
     <canvas id="canvas" width="600" height="300"></canvas>
     <p> </p>
     <button id="idTogButton" onclick="toggleButton()">Start</button>
@@ -104,6 +106,16 @@
     <p id="demo2"></p>
 
 <script>
+
+function draw_tline_fig() {
+    var canvas_tline_fig = document.getElementById("canvas_tline_fig");
+    var ctx_tline_fig = canvas_tline_fig.getContext("2d");
+    ctx_tline_fig.fillStyle = "#ccffff";
+    ctx_tline_fig.fillRect(0,0,canvas_tline_fig.width,canvas_tline_fig.height);
+
+}
+
+draw_tline_fig();
 
 function handleClick(myRadio) {
     if (myRadio.value == "Lossless") {
