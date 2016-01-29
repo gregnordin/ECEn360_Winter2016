@@ -418,7 +418,6 @@ function draw_tline_fig() {
     //ctx_tline_fig.fillText("0",0+9,6);
 
     // Voltage source
-    ctx_tline_fig.save();
     var ces = 30; // circuit element size
     ctx_tline_fig.fillStyle = "white";
     ctx_tline_fig.beginPath();
@@ -431,9 +430,8 @@ function draw_tline_fig() {
     ctx_tline_fig.textAlign = "left";
     ctx_tline_fig.font = "15px Arial";
     var ls = -167; // label shift
-    //ctx_tline_fig.fillText("v(t) = cos(2\u03C0[f\u22C5t-20/\u03BB])",-(cw/2)+ls, 0);
-    //ctx_tline_fig.fillText("~",-(cw/2)+ls, -9);
-    ctx_tline_fig.restore();
+    ctx_tline_fig.fillText("v(t) = cos(2\u03C0[f\u22C5t-20/\u03BB])",-(cw/2)+ls, 0);
+    ctx_tline_fig.textAlign = "center";
 
     // Load impedance
     ctx_tline_fig.save();
@@ -441,6 +439,7 @@ function draw_tline_fig() {
     ctx_tline_fig.fillRect(cw/2-ces/2,-ces/2, ces, ces);
     ctx_tline_fig.strokeRect(cw/2-ces/2,-ces/2, ces, ces);
     ctx_tline_fig.fillStyle = "black";
+    ctx_tline_fig.textAlign = "center";
     ctx_tline_fig.fillText("Z",cw/2,0);
     ctx_tline_fig.font = "10px Arial";
     ctx_tline_fig.fillText("L",cw/2+9,6);
