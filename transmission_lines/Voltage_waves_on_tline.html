@@ -419,19 +419,7 @@ function draw_tline_fig() {
 
     // Voltage source
     var ces = 30; // circuit element size
-    ctx_tline_fig.fillStyle = "white";
-    ctx_tline_fig.beginPath();
-    ctx_tline_fig.arc(-cw/2, 0, ces/2, 0, 2 * Math.PI);
-    ctx_tline_fig.fill();
-    ctx_tline_fig.stroke();
-    ctx_tline_fig.fillStyle = "black";
-    ctx_tline_fig.font = "20px Arial";
-    ctx_tline_fig.fillText("~",-cw/2, 0);
-    ctx_tline_fig.textAlign = "left";
-    ctx_tline_fig.font = "15px Arial";
-    var ls = -167; // label shift
-    ctx_tline_fig.fillText("v(t) = cos(2\u03C0[f\u22C5t-20/\u03BB])",-(cw/2)+ls, 0);
-    ctx_tline_fig.textAlign = "center";
+    draw_voltage_source(ctx_tline_fig, -cw/2, 0, ces/2);
 
     // Load impedance
     ctx_tline_fig.save();
@@ -488,6 +476,24 @@ function draw_tline_fig() {
     ctx_tline_fig.font = "10px Arial";
     ctx_tline_fig.fillText("L",cw/2-cw*cp-rlen-rrad+ts+7,6);
     ctx_tline_fig.restore();
+}
+
+function draw_voltage_source(ctx, x, y, radius) {
+    ctx.save();
+    ctx.fillStyle = "white";
+    ctx.strokeStyle = "black";
+    ctx.beginPath();
+    ctx.arc(x, y, radius, 0, 2 * Math.PI);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = "black";
+    ctx.font = "20px Arial";
+    ctx.fillText("~", x, y);
+    ctx.textAlign = "left";
+    ctx.font = "15px Arial";
+    var ls = -167; // label shift
+    ctx.fillText("v(t) = cos(2\u03C0[f\u22C5t-20/\u03BB])",x+ls, y);
+    ctx.restore();
 }
 
 function reverse_arrow(ctx, x, y, radius, straightlength, color) {
