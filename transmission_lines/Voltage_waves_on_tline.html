@@ -25,7 +25,7 @@
 <body>
 <div style="text-align:center" width:700px margin:auto>
     <h2>Voltage on a Transmission Line</h2>
-    <canvas id="canvas_tline_fig" width="500" height="100"></canvas>
+    <canvas id="canvas_tline_fig" width="500" height="150"></canvas>
     <p> </p>
     <canvas id="canvas" width="600" height="300"></canvas>
     <p> </p>
@@ -106,14 +106,6 @@
     <p id="demo2"></p>
 
 <script>
-
-function draw_tline_fig() {
-    var canvas_tline_fig = document.getElementById("canvas_tline_fig");
-    var ctx_tline_fig = canvas_tline_fig.getContext("2d");
-    ctx_tline_fig.fillStyle = "#ccffff";
-    ctx_tline_fig.fillRect(0,0,canvas_tline_fig.width,canvas_tline_fig.height);
-
-}
 
 draw_tline_fig();
 
@@ -394,6 +386,170 @@ function chkStandingCallback() {
         myData[3].isVisible = false;
     }
     drawAll();
+}
+
+function draw_tline_fig() {
+    var canvas_tline_fig = document.getElementById("canvas_tline_fig");
+    var ctx_tline_fig = canvas_tline_fig.getContext("2d");
+    //ctx_tline_fig.save();
+
+    // set up drawing
+    // ctx_tline_fig.fillStyle = "lightblue";
+    // ctx_tline_fig.fillRect(0,0,canvas_tline_fig.width,canvas_tline_fig.height);
+    var w = canvas_tline_fig.width;
+    var h = canvas_tline_fig.height;
+    ctx_tline_fig.translate(w/2,h/2);
+
+    // Basic circuit rectangle
+    var cw = 0.7*w; // circuit width
+    var ch = 0.4*h;  // circuit height
+    ctx_tline_fig.strokeStyle="black";
+    ctx_tline_fig.strokeRect(-cw/2,-ch/2, cw, ch);
+
+    // Text formatting
+    ctx_tline_fig.fillStyle = "black";
+    ctx_tline_fig.textAlign = "center";
+    ctx_tline_fig.textBaseline = "middle";
+    ctx_tline_fig.font = "15px Arial";
+
+    // Label characteristic impedance
+    ctx_tline_fig.fillText("Z\u2080",0,0);
+    // ctx_tline_fig.font = "10px Arial";
+    // ctx_tline_fig.fillText("0",0+9,6);
+
+    // Voltage source
+    ctx_tline_fig.save();
+    var ces = 30; // circuit element size
+    ctx_tline_fig.fillStyle = "white";
+    ctx_tline_fig.beginPath();
+    ctx_tline_fig.arc(-cw/2, 0, ces/2, 0, 2 * Math.PI);
+    ctx_tline_fig.fill();
+    ctx_tline_fig.stroke();
+    ctx_tline_fig.fillStyle = "black";
+    ctx_tline_fig.font = "20px Arial";
+    ctx_tline_fig.fillText("~",-cw/2, 0);
+    ctx_tline_fig.textAlign = "left";
+    ctx_tline_fig.font = "15px Arial";
+    var ls = 1.33; // label shift
+    ctx_tline_fig.fillText("V(t), f",-(cw/2)*ls, 0);
+    ctx_tline_fig.fillText("~",-(cw/2)*ls, -9);
+    ctx_tline_fig.restore();
+
+    // Load impedance
+    ctx_tline_fig.save();
+    ctx_tline_fig.fillStyle = "white";
+    ctx_tline_fig.fillRect(cw/2-ces/2,-ces/2, ces, ces);
+    ctx_tline_fig.strokeRect(cw/2-ces/2,-ces/2, ces, ces);
+    ctx_tline_fig.fillStyle = "black";
+    ctx_tline_fig.fillText("Z",cw/2,0);
+    ctx_tline_fig.font = "10px Arial";
+    ctx_tline_fig.fillText("L",cw/2+9,6);
+    ctx_tline_fig.restore();
+
+    // t-line circle symbols
+    var cp = 0.12; // relative position of circles for t-line symbol
+    var cr = 6; // radius of t-line symbol circles
+    tline_circle(ctx_tline_fig, -cw/2+cw*cp, -ch/2, cr);
+    tline_circle(ctx_tline_fig,  cw/2-cw*cp, -ch/2, cr);
+    tline_circle(ctx_tline_fig, -cw/2+cw*cp,  ch/2, cr);
+    tline_circle(ctx_tline_fig,  cw/2-cw*cp,  ch/2, cr);
+
+    // z-axis
+    var zo = 1.6; //z axis offset factor (below drawing)
+    drawArrow(ctx_tline_fig, -cw/2+cw*cp,zo*ch/2,cw/2-cw*cp+20,zo*ch/2, 1, 8, "black");
+    ctx_tline_fig.beginPath();
+    var vl = 12; // vertical tick mark length
+    ctx_tline_fig.moveTo(-cw/2+cw*cp,zo*ch/2-vl/2);
+	ctx_tline_fig.lineTo(-cw/2+cw*cp,zo*ch/2+vl/2);
+    ctx_tline_fig.moveTo(cw/2-cw*cp,zo*ch/2-vl/2);
+	ctx_tline_fig.lineTo(cw/2-cw*cp,zo*ch/2+vl/2);
+    ctx_tline_fig.stroke();
+    ctx_tline_fig.fillText("z",cw/2-cw*cp+30,zo*ch/2);
+    var to = 10; // text offset
+    ctx_tline_fig.fillText("0 m",cw/2-cw*cp,zo*ch/2+vl/2+to);
+    ctx_tline_fig.fillText("-20 m",-cw/2+cw*cp,zo*ch/2+vl/2+to);
+
+    // draw arrows and v_+ and v_-
+    al = 50; // arrow length
+    tp = -30; // relative text position
+    zo = 2.0;
+    drawArrow(ctx_tline_fig, 0, -zo*ch/2, al, -zo*ch/2, 1, 10, "rgba(0,0,255,0.8)");
+    ctx_tline_fig.fillText("v\u207A(z,t)",tp,-zo*ch/2);
+    zo = 1.4;
+    drawArrow(ctx_tline_fig, al, -zo*ch/2, 0, -zo*ch/2, 1, 10, "rgba(255,0,0,0.8)");
+    ctx_tline_fig.fillText("v\u207B(z,t)",tp,-zo*ch/2);
+
+    // Reflection coefficient
+    var rrad = 10; // reverse arrow radius
+    var rlen = 15; // length of straight lines in reverse arrow
+    reverse_arrow(ctx_tline_fig, cw/2-cw*cp, 0, rrad, rlen, "grey");
+    var ts = -15; // shift text to left
+    ctx_tline_fig.fillText("\u0393",cw/2-cw*cp-rlen-rrad+ts,0);
+    ctx_tline_fig.save();
+    ctx_tline_fig.font = "10px Arial";
+    ctx_tline_fig.fillText("L",cw/2-cw*cp-rlen-rrad+ts+7,6);
+    ctx_tline_fig.restore();
+}
+
+function reverse_arrow(ctx, x, y, radius, straightlength, color) {
+    var rr = 10; // reverse arrow radius
+    var rl = 15; // reverse arrow length
+    ctx.save();
+    ctx.strokeStyle=color;
+    ctx.beginPath();
+    ctx.moveTo(x-radius-straightlength,y-radius);
+    ctx.lineTo(x-radius,y-radius);
+    ctx.arc(x-radius, y, radius, -Math.PI/2, Math.PI/2);
+    ctx.stroke();
+    drawArrow(ctx, x-radius,y+radius,x-radius-straightlength,y+radius, 1, 10, color);
+    ctx.restore();
+}
+
+function tline_circle(ctx, x, y, radius) {
+    ctx.save();
+    ctx.fillStyle = "white";
+    ctx.beginPath();
+    ctx.arc(x, y, radius, 0, 2 * Math.PI);
+    ctx.fill();
+    ctx.stroke();
+    ctx.restore();
+}
+
+function drawArrow(ctx, fromx, fromy, tox, toy, linewidth, headlength, color){
+    // Adapted from http://stackoverflow.com/questions/808826/draw-arrow-on-canvas-tag
+	//variables to be used when creating the arrow
+	var headlen = headlength;
+
+	var angle = Math.atan2(toy-fromy,tox-fromx);
+    ctx.save();
+
+	//starting path of the arrow from the start square to the end square and drawing the stroke
+	ctx.beginPath();
+	ctx.moveTo(fromx, fromy);
+	ctx.lineTo(tox, toy);
+	ctx.strokeStyle = color;
+	ctx.lineWidth = linewidth;
+	ctx.stroke();
+
+	//starting a new path from the head of the arrow to one of the sides of the point
+	ctx.beginPath();
+	ctx.moveTo(tox, toy);
+	ctx.lineTo(tox-headlen*Math.cos(angle-Math.PI/7),toy-headlen*Math.sin(angle-Math.PI/7));
+
+	//path from the side point of the arrow, to the other side point
+	ctx.lineTo(tox-headlen*Math.cos(angle+Math.PI/7),toy-headlen*Math.sin(angle+Math.PI/7));
+
+	//path from the side point back to the tip of the arrow, and then again to the opposite side point
+	ctx.lineTo(tox, toy);
+	ctx.lineTo(tox-headlen*Math.cos(angle-Math.PI/7),toy-headlen*Math.sin(angle-Math.PI/7));
+
+	//draws the paths created above
+	ctx.strokeStyle = color;
+	ctx.lineWidth = linewidth;
+	ctx.stroke();
+	ctx.fillStyle = color;
+	ctx.fill();
+    ctx.restore();
 }
 
 
