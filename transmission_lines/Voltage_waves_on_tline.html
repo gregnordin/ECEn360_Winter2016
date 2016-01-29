@@ -2,7 +2,7 @@
 <html>
 <meta  content="text/html; charset=UTF-8"  http-equiv="content-type">
 <head>
-    <title>T-line voltage</title>
+    <title>T-Line Voltage</title>
 
     <style>
         fieldset {background-color:lightgrey;
@@ -25,7 +25,7 @@
 <body>
 <div style="text-align:center" width:700px margin:auto>
     <h2>Voltage on a Transmission Line</h2>
-    <canvas id="canvas_tline_fig" width="550" height="150"></canvas>
+    <canvas id="canvas_tline_fig" width="500" height="150"></canvas>
     <p> </p>
     <canvas id="canvas" width="600" height="300"></canvas>
     <p> </p>
@@ -394,11 +394,11 @@ function draw_tline_fig() {
     //ctx_tline_fig.save();
 
     // set up drawing
-    // ctx_tline_fig.fillStyle = "lightblue";
+    // ctx_tline_fig.fillStyle = "rgb(235,235,235)"; //"lightblue";
     // ctx_tline_fig.fillRect(0,0,canvas_tline_fig.width,canvas_tline_fig.height);
     var w = canvas_tline_fig.width;
     var h = canvas_tline_fig.height;
-    ctx_tline_fig.translate(w/2,h/2);
+    ctx_tline_fig.translate(1.3*w/2,h/2);
 
     // Basic circuit rectangle
     var cw = 0.56*w; // circuit width
@@ -414,8 +414,8 @@ function draw_tline_fig() {
 
     // Label characteristic impedance
     ctx_tline_fig.fillText("Z\u2080",0,0);
-    // ctx_tline_fig.font = "10px Arial";
-    // ctx_tline_fig.fillText("0",0+9,6);
+    //ctx_tline_fig.font = "10px Arial";
+    //ctx_tline_fig.fillText("0",0+9,6);
 
     // Voltage source
     ctx_tline_fig.save();
@@ -430,9 +430,9 @@ function draw_tline_fig() {
     ctx_tline_fig.fillText("~",-cw/2, 0);
     ctx_tline_fig.textAlign = "left";
     ctx_tline_fig.font = "15px Arial";
-    var ls = -117; // label shift
-    ctx_tline_fig.fillText("V(t) = cos(2\u03C0ft)",-(cw/2)+ls, 0);
-    ctx_tline_fig.fillText("~",-(cw/2)+ls, -9);
+    var ls = -167; // label shift
+    ctx_tline_fig.fillText("v(t) = cos(2\u03C0[f\u22C5t-20/\u03BB])",-(cw/2)+ls, 0);
+    //ctx_tline_fig.fillText("~",-(cw/2)+ls, -9);
     ctx_tline_fig.restore();
 
     // Load impedance
