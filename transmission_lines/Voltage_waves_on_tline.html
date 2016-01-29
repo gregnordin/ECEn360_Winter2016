@@ -25,7 +25,7 @@
 <body>
 <div style="text-align:center" width:700px margin:auto>
     <h2>Voltage on a Transmission Line</h2>
-    <canvas id="canvas_tline_fig" width="500" height="150"></canvas>
+    <canvas id="canvas_tline_fig" width="550" height="150"></canvas>
     <p> </p>
     <canvas id="canvas" width="600" height="300"></canvas>
     <p> </p>
@@ -401,7 +401,7 @@ function draw_tline_fig() {
     ctx_tline_fig.translate(w/2,h/2);
 
     // Basic circuit rectangle
-    var cw = 0.7*w; // circuit width
+    var cw = 0.56*w; // circuit width
     var ch = 0.4*h;  // circuit height
     ctx_tline_fig.strokeStyle="black";
     ctx_tline_fig.strokeRect(-cw/2,-ch/2, cw, ch);
@@ -430,9 +430,9 @@ function draw_tline_fig() {
     ctx_tline_fig.fillText("~",-cw/2, 0);
     ctx_tline_fig.textAlign = "left";
     ctx_tline_fig.font = "15px Arial";
-    var ls = 1.33; // label shift
-    ctx_tline_fig.fillText("V(t), f",-(cw/2)*ls, 0);
-    ctx_tline_fig.fillText("~",-(cw/2)*ls, -9);
+    var ls = -117; // label shift
+    ctx_tline_fig.fillText("V(t) = cos(2\u03C0ft)",-(cw/2)+ls, 0);
+    ctx_tline_fig.fillText("~",-(cw/2)+ls, -9);
     ctx_tline_fig.restore();
 
     // Load impedance
