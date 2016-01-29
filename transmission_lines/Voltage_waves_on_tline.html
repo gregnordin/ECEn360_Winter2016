@@ -480,12 +480,12 @@ function draw_tline_fig() {
 
 function draw_voltage_source(ctx, x, y, radius) {
     ctx.save();
-    // ctx.fillStyle = "white";
-    // ctx.strokeStyle = "black";
-    // ctx.beginPath();
-    // ctx.arc(x, y, radius, 0, 2 * Math.PI);
-    // ctx.fill();
-    // ctx.stroke();
+    ctx.fillStyle = "white";
+    ctx.strokeStyle = "black";
+    ctx.beginPath();
+    ctx.arc(x, y, radius, 0, 2 * Math.PI);
+    ctx.fill();
+    ctx.stroke();
     ctx.fillStyle = "black";
     ctx.font = "20px Arial";
     ctx.fillText("~", x, y);
