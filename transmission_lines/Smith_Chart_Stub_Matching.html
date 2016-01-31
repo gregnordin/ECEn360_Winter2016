@@ -38,7 +38,7 @@
     <canvas id="canvas" width="600" height="600"></canvas>
     <p> </p>
 </section>
-<aside>
+<aside id="button-panel">
     <p id="zL"></p>
     <button id="idplotzL_Button" onclick="plotzL_Button()" enabled style="background-color:lightgreen;">Plot z<sub>L</sub></button>
     <br />
@@ -68,16 +68,18 @@ var rL_test = 0.4;
 var xL_test = 0.6;
 document.getElementById("zL").innerHTML =  "z<sub>L</sub> = " + rL_test + " + " + xL_test + "j";
 
-var buttons = ["idplotzL_Button", "idplotyL_Button", "idoneplusjb_Button", "idgetd1_Button",
-           "idplotmjb_Button", "idplotstubzL_Button", "idplotstubyL_Button",
-           "idgetd2_Button"];
+var aside = document.getElementById("button-panel");
+// convert htmlCollection returned by getElementsByTagName to an array
+var buttons = [].slice.call( aside.getElementsByTagName('button') );
+buttons.pop(); // don't include the reset button in the list
+
 setAllButtonColors();
 var numDigits = 3;
 var impedanceColor = "red";
 var admittanceColor = "blue";
 var stubImpedanceColor = "orange";
 var stubAdmittanceColor = "violet";
-var smallCircleRadius = 8;
+var smallCircleRadius = 6;
 
 var canvas = document.getElementById("canvas");
 var ctx = canvas.getContext("2d");
@@ -95,7 +97,7 @@ axes.y_range = axes.y_max - axes.y_min;
 axes.x_scale = canvas.width * frac_max_x / axes.x_range;  // # canvas pixels per unit in z
 axes.y_scale = canvas.height * frac_max_y / axes.y_range;  // # canvas pixels per unit in v
 
-colorCanvasBackground(canvas, "#eeeeee")
+//colorCanvasBackground(canvas, "#eeeeee")
 
 drawSmithChart(ctx);
 
@@ -113,8 +115,7 @@ function colorCanvasBackground(canvas, color) {
 }
 
 function setButtonColor(btn) {
-    var property = document.getElementById(btn);
-    property.style.backgroundColor = property.disabled? "#dddddd" : "lightgreen";
+    btn.style.backgroundColor = btn.disabled? "#dddddd" : "lightgreen";
 }
 
 function setAllButtonColors() {
@@ -124,9 +125,9 @@ function setAllButtonColors() {
 }
 
 function resetButton() {
-    document.getElementById(buttons[0]).disabled = false;
+    buttons[0].disabled = false;
     for (var i=1; i<buttons.length; i++) {
-        document.getElementById(buttons[i]).disabled = true;
+        buttons[i].disabled = true;
     }
     setAllButtonColors();
     document.getElementById("results").innerHTML = "";
@@ -138,7 +139,7 @@ function resetButton() {
 var  zL_x = 0,  zL_y = 0;
 var  yL_x = 0,  yL_y = 0;
 var yL_rL = 0, yL_xL = 0;
-var     a = 0,     b = 0;
+//var     a = 0,     b = 0;
 var oneplusjb_x = 0;
 var oneplusjb_y = 0;
 var oneplusjb_rL = 0;
@@ -164,8 +165,8 @@ function plotzL_Button() {
     // text += "x = " + zL_x.toFixed(numDigits) + ", ";
     // text += "y = " + zL_y.toFixed(numDigits);
     document.getElementById("results").innerHTML =  text;
-    document.getElementById(buttons[0]).disabled =  true;
-    document.getElementById(buttons[1]).disabled =  false;
+    buttons[0].disabled =  true;
+    buttons[1].disabled =  false;
     setAllButtonColors();
 }
 
@@ -189,8 +190,8 @@ function plotyL_Button() {
     // text += "x = " + yL_x.toFixed(numDigits) +
     //         ", y = " + yL_y.toFixed(numDigits);
     document.getElementById("results").innerHTML =  text;
-    document.getElementById(buttons[1]).disabled =  true;
-    document.getElementById(buttons[2]).disabled =  false;
+    buttons[1].disabled =  true;
+    buttons[2].disabled =  false;
     setAllButtonColors();
 }
 
@@ -226,8 +227,8 @@ function oneplusjb_Button() {
     ctx.fillText("1 + jb",to_x(1.15*oneplusjb_x),to_y(0.8*oneplusjb_y));
     ctx.restore();
     drawSmallFilledCircle(oneplusjb_x, oneplusjb_y, admittanceColor);
-    document.getElementById(buttons[2]).disabled =  true;
-    document.getElementById(buttons[3]).disabled =  false;
+    buttons[2].disabled =  true;
+    buttons[3].disabled =  false;
     setAllButtonColors();
 }
 
@@ -261,8 +262,8 @@ function getd1_Button() {
     text += "<br //>"
     text += "d<sub>1</sub> = " + d1.toFixed(numDigits) + "&lambda;";
     document.getElementById("results").innerHTML =  text;
-    document.getElementById(buttons[3]).disabled =  true;
-    document.getElementById(buttons[4]).disabled =  false;
+    buttons[3].disabled =  true;
+    buttons[4].disabled =  false;
     setAllButtonColors();
 }
 
@@ -282,8 +283,8 @@ function plotmjb_Button() {
     text += "<br //>"
     text += "y<sub>stub</sub> = " + minusjb_xL.toFixed(numDigits) + "j";
     document.getElementById("results").innerHTML =  text;
-    document.getElementById(buttons[4]).disabled =  true;
-    document.getElementById(buttons[5]).disabled =  false;
+    buttons[4].disabled =  true;
+    buttons[5].disabled =  false;
     setAllButtonColors();
 }
 
@@ -301,8 +302,8 @@ function plotstubzL_Button() {
     text += "<br //>&nbsp;&nbsp;&nbsp;&nbsp;"
     text += "(Stub load impedance: z<sub>L</sub> = -1 +0j)";
     document.getElementById("results").innerHTML =  text;
-    document.getElementById(buttons[5]).disabled =  true;
-    document.getElementById(buttons[6]).disabled =  false;
+    buttons[5].disabled =  true;
+    buttons[6].disabled =  false;
     setAllButtonColors();
 }
 
@@ -318,8 +319,8 @@ function plotstubyL_Button() {
     text += "<br //>"
     text += "Stub load admittance: y<sub>L</sub> = 1 +0j";
     document.getElementById("results").innerHTML =  text;
-    document.getElementById(buttons[6]).disabled =  true;
-    document.getElementById(buttons[7]).disabled =  false;
+    buttons[6].disabled =  true;
+    buttons[7].disabled =  false;
     setAllButtonColors();
 }
 
@@ -354,7 +355,7 @@ function getd2_Button() {
     text += "<br //>"
     text += "d<sub>2</sub> = " + d2.toFixed(numDigits) + "&lambda;";
     document.getElementById("results").innerHTML =  text;
-    document.getElementById(buttons[7]).disabled =  true;
+    buttons[7].disabled =  true;
     setAllButtonColors();
 }
 
