@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html>
+<meta  content="text/html; charset=UTF-8"  http-equiv="content-type">
+<head>
+    <title>Smith Chart</title>
+
+    <style>
+        .group {
+            width: 1000px;
+        }
+        section {
+            float:left;
+            margin: 0 1.5%;
+            width: 60%;
+        }
+        aside {
+            float:right;
+            margin: 0 1.5%;
+            width: 30%;
+        }
+        button {
+            background-color: "#dddddd";
+            border:2px solid grey;
+            padding-left: 5px;
+            padding-right: 5px;
+            width: 100px;
+            margin-bottom: 10px;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="group">
+<h2 style="width: 70%;text-align:center">Smith Chart</h2>
+<section>
+    <canvas id="canvas" width="600" height="600"></canvas>
+    <p> </p>
+</section>
+<aside>
+    <p id="zL"></p>
+    <button id="idplotzL_Button" onclick="plotzL_Button()" enabled style="background-color:lightgreen;">Plot z<sub>L</sub></button>
+    <br />
+    <button id="idplotyL_Button" onclick="plotyL_Button()" disabled>Plot y<sub>L</sub></button>
+    <br />
+    <button id="idoneplusjb_Button" onclick="oneplusjb_Button()" disabled>Find 1 + jb</button>
+    <br />
+    <button id="idgetd1_Button" onclick="getd1_Button()" disabled>Get d<sub>1</sub></button>
+    <br />
+    <button id="idplotmjb_Button" onclick="plotmjb_Button()" disabled>Plot -jb</button>
+    <br />
+    <button id="idplotstubzL_Button" onclick="plotstubzL_Button()" disabled>Plot stub z<sub>L</sub></button>
+    <br />
+    <button id="idplotstubyL_Button" onclick="plotstubyL_Button()" disabled>Plot stub y<sub>L</sub></button>
+    <br />
+    <button id="idgetd2_Button" onclick="getd2_Button()" disabled>Get d<sub>2</sub></button>
+    <br />
+    <button id="idresetButton" onclick="resetButton()" enabled style="background-color:lightgreen;">Reset</button>
+    <br />
+    <p id="results"></p>
+</aside>
+</div>
+
+<script>
+
+var rL_test = 0.4;
+var xL_test = 0.6;
+document.getElementById("zL").innerHTML =  "z<sub>L</sub> = " + rL_test + " + " + xL_test + "j";
+
+var buttons = ["idplotzL_Button", "idplotyL_Button", "idoneplusjb_Button", "idgetd1_Button",
+           "idplotmjb_Button", "idplotstubzL_Button", "idplotstubyL_Button",
+           "idgetd2_Button"];
+setAllButtonColors();
+var numDigits = 3;
+var impedanceColor = "red";
+var admittanceColor = "blue";
+var stubImpedanceColor = "orange";
+var stubAdmittanceColor = "violet";
+var smallCircleRadius = 8;
+
+var canvas = document.getElementById("canvas");
+var ctx = canvas.getContext("2d");
+var frac_max_x = 0.9;
+var frac_max_y = 0.9;
+var axes={};
+axes.x0 = canvas.width*0.5;  // x0 pixels from left to x=0
+axes.y0 = canvas.height*0.5; // y0 pixels from top to y=0
+axes.x_min = -1.1;
+axes.x_max = 1.1;
+axes.y_min = -1.1;
+axes.y_max = 1.1;
+axes.x_range = axes.x_max - axes.x_min;
+axes.y_range = axes.y_max - axes.y_min;
+axes.x_scale = canvas.width * frac_max_x / axes.x_range;  // # canvas pixels per unit in z
+axes.y_scale = canvas.height * frac_max_y / axes.y_range;  // # canvas pixels per unit in v
+
+colorCanvasBackground(canvas, "#eeeeee")
+
+drawSmithChart(ctx);
+
+// Set text characteristics
+ctx.textAlign = "center";
+ctx.textBaseline = "middle";
+var regularFont = "15px Arial"
+var subscriptFont = "12px Arial"
+ctx.font = regularFont;
+ctx.fillStyle = "#000000";
+
+function colorCanvasBackground(canvas, color) {
+    ctx.fillStyle = color;
+    ctx.fillRect(0,0,canvas.width,canvas.height);
+}
+
+function setButtonColor(btn) {
+    var property = document.getElementById(btn);
+    property.style.backgroundColor = property.disabled? "#dddddd" : "lightgreen";
+}
+
+function setAllButtonColors() {
+    for (var i=0; i<buttons.length; i++) {
+        setButtonColor(buttons[i]);
+    }
+}
+
+function resetButton() {
+    document.getElementById(buttons[0]).disabled = false;
+    for (var i=1; i<buttons.length; i++) {
+        document.getElementById(buttons[i]).disabled = true;
+    }
+    setAllButtonColors();
+    document.getElementById("results").innerHTML = "";
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    drawSmithChart(ctx);
+    ctx.font = regularFont;
+}
+
+var  zL_x = 0,  zL_y = 0;
+var  yL_x = 0,  yL_y = 0;
+var yL_rL = 0, yL_xL = 0;
+var     a = 0,     b = 0;
+var oneplusjb_x = 0;
+var oneplusjb_y = 0;
+var oneplusjb_rL = 0;
+var oneplusjb_xL = 0;
+var minusjb_xL = 0;
+var minusjb_x = 0;
+var minusjb_y = 0;
+
+function plotzL_Button() {
+    var result = rLxL_to_xy(rL_test, xL_test);
+    zL_x = result.x;
+    zL_y = result.y;
+    drawSmallFilledCircle(zL_x, zL_y, impedanceColor);
+    ctx.save();
+    ctx.fillStyle = impedanceColor;
+    ctx.fillText("z",to_x(1.2*zL_x),to_y(1.2*zL_y));
+    ctx.font = subscriptFont;
+    ctx.fillText("L",to_x(1.2*zL_x)+8,to_y(1.2*zL_y)+7);
+    ctx.restore();
+    var text = "z<sub>L</sub> = " + rL_test.toFixed(numDigits) + " + ";
+    text += xL_test.toFixed(numDigits) + "j";
+    // text += "<br //>&nbsp;&nbsp;&nbsp;&nbsp;"
+    // text += "x = " + zL_x.toFixed(numDigits) + ", ";
+    // text += "y = " + zL_y.toFixed(numDigits);
+    document.getElementById("results").innerHTML =  text;
+    document.getElementById(buttons[0]).disabled =  true;
+    document.getElementById(buttons[1]).disabled =  false;
+    setAllButtonColors();
+}
+
+function plotyL_Button() {
+    yL_x = -zL_x;
+    yL_y = -zL_y;
+    var result = xy_to_rLxL(yL_x, yL_y);
+    yL_rL = result.rL;
+    yL_xL = result.xL;
+    drawSmallFilledCircle(yL_x, yL_y, admittanceColor);
+    ctx.save();
+    ctx.fillStyle = admittanceColor;
+    ctx.fillText("y",to_x(1.35*yL_x),to_y(1.*yL_y));
+    ctx.font = subscriptFont;
+    ctx.fillText("L",to_x(1.35*yL_x)+8,to_y(1.*yL_y)+7);
+    ctx.restore();
+    var text = document.getElementById("results").innerHTML;
+    text += "<br //>y<sub>L</sub> = " + yL_rL.toFixed(numDigits) + " + ";
+    text += yL_xL.toFixed(numDigits) + "j";
+    // text += "<br //>&nbsp;&nbsp;&nbsp;&nbsp;"
+    // text += "x = " + yL_x.toFixed(numDigits) +
+    //         ", y = " + yL_y.toFixed(numDigits);
+    document.getElementById("results").innerHTML =  text;
+    document.getElementById(buttons[1]).disabled =  true;
+    document.getElementById(buttons[2]).disabled =  false;
+    setAllButtonColors();
+}
+
+function oneplusjb_Button() {
+    var r1 = Math.sqrt(Math.pow(zL_x, 2) + Math.pow(zL_y, 2));
+    var result = circle_intersections(0, 0, r1, 0.5, 0, 0.5);
+    // console.log(result.intersection1_x + ', ' + result.intersection1_y)
+    // console.log(result.intersection2_x + ', ' + result.intersection2_y)
+    oneplusjb_x = result.intersection2_x;
+    oneplusjb_y = result.intersection2_y;
+    var result = xy_to_rLxL(oneplusjb_x, oneplusjb_y);
+    oneplusjb_rL = result.rL;
+    oneplusjb_xL = result.xL;
+    var theta1 = Math.atan2(yL_y, yL_x);
+    var theta2 = Math.atan2(oneplusjb_y, oneplusjb_x);
+    var text = document.getElementById("results").innerHTML;
+    text += "<br //>y<sub>d<sub>1</sub></sub> = " + oneplusjb_rL.toFixed(numDigits) + " + ";
+    text += oneplusjb_xL.toFixed(numDigits) + "j";
+    // text += "<br //>&nbsp;&nbsp;&nbsp;&nbsp;"
+    // text += "x = " + oneplusjb_x.toFixed(numDigits) +
+    //         ", y = " + oneplusjb_y.toFixed(numDigits);
+    //         text += "<br //>&nbsp;&nbsp;&nbsp;&nbsp;"
+    // text += "&theta;<sub>1</sub> = " + theta1.toFixed(numDigits) +
+    //         ", &theta;<sub>2</sub> = " + theta2.toFixed(numDigits);
+    document.getElementById("results").innerHTML =  text;
+    ctx.save();
+    ctx.strokeStyle = admittanceColor;
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(to_x(0), to_y(0), r1*axes.x_scale, -theta1, -theta2);
+    ctx.stroke();
+    ctx.fillStyle = admittanceColor;
+    ctx.fillText("1 + jb",to_x(1.15*oneplusjb_x),to_y(0.8*oneplusjb_y));
+    ctx.restore();
+    drawSmallFilledCircle(oneplusjb_x, oneplusjb_y, admittanceColor);
+    document.getElementById(buttons[2]).disabled =  true;
+    document.getElementById(buttons[3]).disabled =  false;
+    setAllButtonColors();
+}
+
+function getd1_Button() {
+    var theta1 = Math.atan2(yL_y, yL_x);
+    var theta2 = Math.atan2(oneplusjb_y, oneplusjb_x);
+    ctx.save();
+    ctx.strokeStyle = admittanceColor;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(to_x(0), to_y(0));
+    ctx.lineTo(to_x(1.1*Math.cos(theta1)), to_y(1.1*Math.sin(theta1)));
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(to_x(0), to_y(0));
+    ctx.lineTo(to_x(1.1*Math.cos(theta2)), to_y(1.1*Math.sin(theta2)));
+    ctx.stroke();
+    ctx.font = regularFont;
+    ctx.fillStyle = admittanceColor;
+    ctx.fillText("d   start",to_x(1.45*Math.cos(theta1)),to_y(1.1*Math.sin(theta1)));
+    ctx.font = subscriptFont;
+    ctx.fillText("1",to_x(1.45*Math.cos(theta1))-12,to_y(1.1*Math.sin(theta1))+7);
+    ctx.restore();
+    ctx.fillStyle = admittanceColor;
+    ctx.fillText("d  end",to_x(1.05*Math.cos(theta2)),to_y(1.15*Math.sin(theta2)));
+    ctx.font = subscriptFont;
+    ctx.fillText("1",to_x(1.05*Math.cos(theta2))-10,to_y(1.15*Math.sin(theta2))+7);
+    ctx.restore();
+    var d1 = (2*Math.PI - (theta2-theta1))/(2*Math.PI)/2;
+    var text = document.getElementById("results").innerHTML;
+    text += "<br //>"
+    text += "d<sub>1</sub> = " + d1.toFixed(numDigits) + "&lambda;";
+    document.getElementById("results").innerHTML =  text;
+    document.getElementById(buttons[3]).disabled =  true;
+    document.getElementById(buttons[4]).disabled =  false;
+    setAllButtonColors();
+}
+
+function plotmjb_Button() {
+    minusjb_xL = -oneplusjb_xL;
+    var result = rLxL_to_xy(0, minusjb_xL);
+    minusjb_x = result.x;
+    minusjb_y = result.y;
+    drawSmallFilledCircle(minusjb_x, minusjb_y, stubAdmittanceColor);
+    ctx.font = regularFont;
+    ctx.save();
+    ctx.fillStyle = stubAdmittanceColor;
+    ctx.fillText("-jb",to_x(0.75*minusjb_x),to_y(0.95*minusjb_y));
+    ctx.restore();
+    var phi = Math.atan2(minusjb_y, minusjb_x);
+    var text = document.getElementById("results").innerHTML;
+    text += "<br //>"
+    text += "y<sub>stub</sub> = " + minusjb_xL.toFixed(numDigits) + "j";
+    document.getElementById("results").innerHTML =  text;
+    document.getElementById(buttons[4]).disabled =  true;
+    document.getElementById(buttons[5]).disabled =  false;
+    setAllButtonColors();
+}
+
+function plotstubzL_Button() {
+    drawSmallFilledCircle(-1, 0, stubImpedanceColor);
+    ctx.save();
+    ctx.fillStyle = stubImpedanceColor;
+    ctx.fillText("stub z",to_x(-0.9),to_y(0.1));
+    ctx.font = subscriptFont;
+    ctx.fillText("L",to_x(-0.9)+24,to_y(0.1)+7);
+    ctx.restore();
+    var text = document.getElementById("results").innerHTML;
+    text += "<br //>"
+    text += "Stub short circuit: &Gamma;<sub>L</sub> = -1";
+    text += "<br //>&nbsp;&nbsp;&nbsp;&nbsp;"
+    text += "(Stub load impedance: z<sub>L</sub> = -1 +0j)";
+    document.getElementById("results").innerHTML =  text;
+    document.getElementById(buttons[5]).disabled =  true;
+    document.getElementById(buttons[6]).disabled =  false;
+    setAllButtonColors();
+}
+
+function plotstubyL_Button() {
+    drawSmallFilledCircle(1, 0, stubAdmittanceColor);
+    ctx.save();
+    ctx.fillStyle = stubAdmittanceColor;
+    ctx.fillText("stub y",to_x(0.8),to_y(-0.1));
+    ctx.font = subscriptFont;
+    ctx.fillText("L",to_x(0.8)+23,to_y(-0.1)+7);
+    ctx.restore();
+    var text = document.getElementById("results").innerHTML;
+    text += "<br //>"
+    text += "Stub load admittance: y<sub>L</sub> = 1 +0j";
+    document.getElementById("results").innerHTML =  text;
+    document.getElementById(buttons[6]).disabled =  true;
+    document.getElementById(buttons[7]).disabled =  false;
+    setAllButtonColors();
+}
+
+function getd2_Button() {
+    var phi = Math.atan2(minusjb_y, minusjb_x);
+    ctx.save();
+    ctx.strokeStyle = stubAdmittanceColor;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(to_x(0), to_y(0));
+    ctx.lineTo(to_x(1.1), to_y(0));
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(to_x(0), to_y(0));
+    ctx.lineTo(to_x(1.1*Math.cos(phi)), to_y(1.1*Math.sin(phi)));
+    ctx.stroke();
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(to_x(0), to_y(0), 1.0*axes.x_scale, 0, -phi);
+    ctx.stroke();
+    ctx.fillStyle = stubAdmittanceColor;
+    ctx.fillText("d   start",to_x(1.11),to_y(0.1));
+    ctx.font = subscriptFont;
+    ctx.fillText("2",to_x(1.11)-12,to_y(0.1)+7);
+    ctx.restore();  ctx.fillStyle = stubAdmittanceColor;
+    ctx.fillText("d   end",to_x(1.05*Math.cos(phi)),to_y(1.15*Math.sin(phi)));
+    ctx.font = subscriptFont;
+    ctx.fillText("2",to_x(1.05*Math.cos(phi))-12,to_y(1.15*Math.sin(phi))+7);
+    ctx.restore();
+    var d2 = (-phi)/(2*Math.PI)/2;
+    var text = document.getElementById("results").innerHTML;
+    text += "<br //>"
+    text += "d<sub>2</sub> = " + d2.toFixed(numDigits) + "&lambda;";
+    document.getElementById("results").innerHTML =  text;
+    document.getElementById(buttons[7]).disabled =  true;
+    setAllButtonColors();
+}
+
+
+function rLxL_to_xy(rL, xL) {
+    var denominator = Math.pow(rL+1, 2) + Math.pow(xL, 2);
+    var x = (Math.pow(rL,2) + Math.pow(xL,2) - 1)/denominator;
+    var y = 2*xL/denominator;
+    return {x : x, y : y}
+}
+
+function xy_to_rLxL(x, y) {
+    var denominator = Math.pow(1-x, 2) + Math.pow(y, 2);
+    var rL = (1 - (Math.pow(x,2) + Math.pow(y,2)))/denominator;
+    var xL = 2*y/denominator;
+    return {rL : rL, xL : xL}
+}
+
+function drawSmallFilledCircle(x, y, color) {
+    ctx.save();
+    ctx.strokeStyle = color;
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.arc(to_x(x), to_y(y), smallCircleRadius, 0, 2*Math.PI);
+    ctx.fill()
+    ctx.stroke();
+    ctx.restore();
+}
+
+// coordinate transformation from plot coordinates to canvas coordinates
+function to_x(xplot) {return xplot*axes.x_scale + axes.x0;}
+function to_y(yplot) {return -yplot*axes.y_scale + axes.y0;}
+
+function drawSmithChart(ctx) {
+    draw_xL_lines(ctx, 0.1, 5.01);
+    draw_rL_lines(ctx, 0.1, 5.01);
+    drawAxes(ctx);
+    drawOuterCircle(ctx);
+}
+
+function drawAxes(ctx) {
+    ctx.save();
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = "rgba(0,0,0,0.5)";
+    ctx.beginPath();
+    ctx.moveTo(to_x(-1.1),to_y(0));
+    ctx.lineTo(to_x(1.1),to_y(0));
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(to_x(0),to_y(-1.1));
+    ctx.lineTo(to_x(0),to_y(1.1));
+    ctx.stroke();
+    ctx.restore();
+}
+
+function drawOuterCircle(ctx) {
+    ctx.save();
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = "rgba(0,0,0,0.5)";
+    ctx.beginPath();
+    ctx.arc(to_x(0), to_y(0), 1.0*axes.x_scale, 0, 2*Math.PI);
+    ctx.stroke();
+    ctx.restore();
+}
+
+function isWhole(num) {
+    var i = Math.abs(num) % 1
+    return ((i < 0.0000001) || (i > 0.9999999))
+}
+
+// See http://math.stackexchange.com/questions/256100/how-can-i-find-the-points-at-which-two-circles-intersect
+function circle_intersections(x1, y1, r1, x2, y2, r2) {
+    var R = Math.sqrt( Math.pow(x2-x1, 2) + Math.pow(y2-y1, 2) );
+    if (R >= r1+r2) {
+        console.log("circle_intersections(): two intersection points do not exist")
+        console.log("r1 = " + r1 + ", r2 = " + r2 + ", R = " + R)
+        return {intersection1_x: 0, intersection1_y: 0,
+                intersection2_x: 0, intersection2_y: 0};
+    };
+    var a = 0.5;
+    var b = (Math.pow(r1, 2) - Math.pow(r2, 2))/(2*Math.pow(R, 2));
+    var c = 0.5 * Math.sqrt(
+            2*(Math.pow(r1, 2) + Math.pow(r2, 2))/Math.pow(R, 2) -
+            Math.pow((Math.pow(r1, 2) - Math.pow(r2, 2)), 2) / Math.pow(R, 4)
+            - 1);
+    var x_plus  = a*(x1+x2) + b*(x2-x1) + c*(y2-y1);
+    var x_minus = a*(x1+x2) + b*(x2-x1) - c*(y2-y1);
+    var y_plus  = a*(y1+y2) + b*(y2-y1) + c*(x1-x2);
+    var y_minus = a*(y1+y2) + b*(y2-y1) - c*(x1-x2);
+
+    return {intersection1_x: x_plus,  intersection1_y: y_plus,
+            intersection2_x: x_minus, intersection2_y: y_minus};
+}
+
+// intersection solution from
+// http://math.stackexchange.com/questions/256100/how-can-i-find-the-points-at-which-two-circles-intersect
+function draw_xL_lines(ctx, interval, limit) {
+    ctx.save();
+    ctx.lineWidth = 1;
+    var linecolor = "rgba(0,0,0,";
+    var one_over_xL = 1.0/2.0;
+    for (xL = 0; xL <= limit; xL += interval) {
+        alpha = isWhole(xL)? 0.6 : 0.2;
+        ctx.strokeStyle = linecolor + alpha + ")";
+        if (xL == 0) {
+            ctx.beginPath();
+            ctx.moveTo(to_x(-1), to_y(0));
+            ctx.lineTo(to_x(1),  to_y(0));
+            ctx.stroke();
+        } else {
+            var one_over_xL = 1/xL;
+            solutions = circle_intersections(0, 0, 1, 1, one_over_xL, one_over_xL);
+            var xs = solutions.intersection2_x;
+            var ys = solutions.intersection2_y;
+            var theta = Math.atan2(1-xs, one_over_xL - ys);
+            // Draw xL > 0 arc
+            ctx.beginPath();
+            ctx.arc(to_x(1), to_y(one_over_xL), one_over_xL*axes.x_scale, Math.PI/2, Math.PI/2+theta);
+            ctx.stroke();
+            // Draw corresponding xL < 0 arc
+            var counterclockwise = true;
+            ctx.beginPath();
+            ctx.arc(to_x(1), to_y(-one_over_xL), one_over_xL*axes.x_scale,
+                    3*Math.PI/2, 3*Math.PI/2-theta, counterclockwise);
+            ctx.stroke();
+        }
+    }
+    ctx.restore();
+}
+
+function draw_rL_lines(ctx, interval, limit) {
+    ctx.save();
+    ctx.lineWidth = 1;
+    var linecolor = "rgba(0,0,0,";
+    for (rL = interval; rL <= limit; rL += interval) {
+        alpha = isWhole(rL)? 0.6 : 0.2;
+        ctx.strokeStyle = linecolor + alpha + ")";
+        var x_center = rL/(1+rL);
+        var y_center = 0;
+        var radius = 1/(1+rL);
+        ctx.beginPath();
+        ctx.arc(to_x(x_center), to_y(y_center), radius*axes.x_scale, 0, 2*Math.PI);
+        ctx.stroke();
+    }
+    ctx.restore();
+}
+
+</script>
+
+</body>
+</html>
