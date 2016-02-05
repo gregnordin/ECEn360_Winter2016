@@ -197,38 +197,8 @@
 
 <script>
 
-
-function vgUpdate(value) {
-    v_g = Number(value);
-    console.log(value, v_g);
-    update_params();
-    set_axes();
-    drawAll();
-}
-
-function RgUpdate(value) {
-    var temp = Gamma_from_R(Number(value));
-    console.log(Z0, value, temp, Gamma_from_R(value));
-    document.querySelector('#idGammagValue').innerHTML = temp.toFixed(2);
-    document.querySelector('#idGammag').value = temp;
-    update_params();
-    if (!timerRunning) drawAll();
-}
-
-function RLUpdate(value) {
-    var temp = Gamma_from_R(Number(value));
-    console.log(Z0, value, temp, Gamma_from_R(value));
-    document.querySelector('#idGammaLValue').innerHTML = temp.toFixed(2);
-    document.querySelector('#idGammaL').value = temp;
-    update_params();
-    if (!timerRunning) drawAll();
-
-}
-
 var Z0 = 50;
 var v_g = 1.0;
-var initial_GammaL = 0.5;
-// GammaLUpdate( initial_GammaL );
 update_params();
 
 //draw_tline_fig();
@@ -263,21 +233,6 @@ function v_steadystate() {
 
 function update_params() {
     calc_delta_voltages();
-    // var text = "";
-    // text += "Z<sub>0</sub> = " + Z0 + " &Omega;";
-    // text += "<br />";
-    // text += "<br />";
-    // text += "&Gamma;<sub>g</sub> = " + Gammag().toFixed(2) + ", R<sub>g</sub> = " + Rg().toFixed(2) + " &Omega;";
-    // text += "<br />";
-    // text += "&Gamma;<sub>L</sub> = " + GammaL().toFixed(2) + ", R<sub>L</sub> = " + RL().toFixed(2) + " &Omega;";
-    // text += "<br />";
-    // text += "<br />";
-    // text += "v<sub>g</sub> = " + v_g.toFixed(2) + " V";
-    // text += "<br />";
-    // text += "v<sup>+</sup><sub>1</sub> = " + v1_plus().toFixed(2) + " V";
-    // text += "<br />";
-    // text += "v<sub>steady state</sub> = " + v_steadystate().toFixed(2) + " V";
-    // document.getElementById("values").innerHTML = text;
     document.querySelector('#idv1plus').value = v1_plus().toFixed(2);
     document.querySelector('#idvss').value = v_steadystate().toFixed(2);
 }
@@ -290,14 +245,17 @@ function Gamma_from_R(R) {
     return (R-Z0) / (R+Z0);
 }
 
+function vgUpdate(value) {
+    v_g = Number(value);
+    console.log(value, v_g);
+    update_params();
+    set_axes();
+    drawAll();
+}
+
 function GammaLUpdate(value) {
 	document.querySelector('#idGammaLValue').innerHTML = Number(value).toFixed(2);
     var temp = R_from_Gamma(Number(value));
-    // if (temp > 1e5) {
-    //     document.querySelector('#idRL').value = Infinity;
-    // } else {
-    //     document.querySelector('#idRL').value = temp.toFixed(2);
-    // }
     document.querySelector('#idRL').value = RL().toFixed(1);
     update_params();
     if (!timerRunning) drawAll();
@@ -309,6 +267,25 @@ function GammagUpdate(value) {
     document.querySelector('#idRg').value = temp.toFixed(1);
     update_params();
     if (!timerRunning) drawAll();
+}
+
+function RgUpdate(value) {
+    var temp = Gamma_from_R(Number(value));
+    console.log(Z0, value, temp, Gamma_from_R(value));
+    document.querySelector('#idGammagValue').innerHTML = temp.toFixed(2);
+    document.querySelector('#idGammag').value = temp;
+    update_params();
+    if (!timerRunning) drawAll();
+}
+
+function RLUpdate(value) {
+    var temp = Gamma_from_R(Number(value));
+    console.log(Z0, value, temp, Gamma_from_R(value));
+    document.querySelector('#idGammaLValue').innerHTML = temp.toFixed(2);
+    document.querySelector('#idGammaL').value = temp;
+    update_params();
+    if (!timerRunning) drawAll();
+
 }
 
 
@@ -339,7 +316,6 @@ for (i=0; i<=2*num_roundtrips; i++) {
     v_delta.push(0);
 }
 calc_delta_voltages();
-// console.log(v_delta.length, v_delta[0], v_delta);
 var numpnts = 120;
 var voltage = [];
 for (var i=0; i<numpnts; i++) {
@@ -349,7 +325,6 @@ var z = [];
 for (var i=0; i<numpnts; i++) {
     z.push(axes.zmin + (axes.zmax - axes.zmin)*i/(numpnts-1));
 }
-//console.log("Voltage array ", voltage.length, numpnts, voltage, z.length, z);
 
 function calc_delta_voltages() {
     // v_delta[0] += v1_plus();
