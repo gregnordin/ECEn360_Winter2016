@@ -6,7 +6,7 @@
 
     <style>
         fieldset {background-color:lightgrey;
-                  width:500px;
+                  width:420px;
                   margin:auto;
                   text-align:left;
                 }
@@ -20,6 +20,14 @@
                padding-left: 5px;
                padding-right: 5px;
               }
+        table {
+            /* make the border continuous (without gaps between columns) */
+            border-collapse: collapse;
+        }
+        tr.separated td {
+            /* set border style for separated rows */
+            border-bottom: 1px solid grey;
+        }
         .params {
             table-layout: fixed;
             width: 100%;
@@ -46,6 +54,9 @@
         .params .col-4 {
             width: 30%;
         }
+        .Rinput {
+            width: 60px;
+        }
     </style>
 
 </head>
@@ -62,10 +73,29 @@
     <br />
 
     <fieldset>
-        <legend>Parameter controls</legend>
+        <legend>Parameters</legend>
+
         <table class="params">
             <!-- <col class="col-1" />
             <col class="col-2" /> -->
+            <tr>
+                <td class="col-1">
+                    <label for="idSelectVoltage">v<sub>g</sub> &nbsp;</label>
+                </td>
+                <td class="col-2">
+                    <select name="vglist" id="idSelectVoltage" oninput="vgUpdate(value)">
+                        <option value="1.0">1.0 V</option>
+                        <option value="3.3">3.3 V</option>
+                        <option value="5.0">5.0 V</option>
+                    </select>
+                </td>
+                <td class="col-3">
+                    <p></p>
+                </td>
+                <td class="col-4">
+                    <p></p>
+                </td>
+            </tr>
             <tr>
                 <td class="col-1">
                     <label for="idGammag">&#915;<sub>g</sub> &nbsp;</label>
@@ -79,8 +109,8 @@
                     <label for="idRg">R<sub>g</sub> &nbsp;</label>
                 </td>
                 <td class="col-4">
-                    <input type="number" id="idRg" style="direction: rtl;" min="0" value="50"
-                         oninput="RgUpdate(value)">
+                    <input type="number" id="idRg" min="0" value="50"
+                         class="Rinput" oninput="RgUpdate(value)">
                     <output for="idRg" id="idRgValue">&Omega;</output>
                 </td>
             </tr>
@@ -98,8 +128,62 @@
                 </td>
                 <td class="col-4">
                     <input type="number" id="idRL" min="0" value="150"
-                         style="direction: rtl;" oninput="RLUpdate(value)">
+                         class="Rinput" oninput="RLUpdate(value)">
                     <output for="idRL" id="idRLValue">&Omega;</output>
+                </td>
+            </tr>
+            <tr class="separated">
+                <td><p></p></td> <td><p></p></td> <td><p></p></td> <td><p></p></td>
+            </tr>
+            <tr>
+                <td><p></p></td> <td><p></p></td> <td><p></p></td> <td><p></p></td>
+            </tr>
+            <tr>
+                <td class="col-1">
+                    <label for="idZ0">Z<sub>0</sub> &nbsp;</label>
+                </td>
+                <td class="col-2">
+                    <input type="number" id="idZ0" value="50"
+                         class="Rinput" disabled>
+                    <output for="idZ0" id="idZ0Value">&Omega;</output>
+                </td>
+                <td class="col-3">
+                    <p></p>
+                </td>
+                <td class="col-4">
+                    <p></p>
+                </td>
+            </tr>
+            <tr>
+                <td class="col-1">
+                    <label for="idv1plus">v<sup>+</sup><sub>1</sub> &nbsp;</label>
+                </td>
+                <td class="col-2">
+                    <input type="number" id="idv1plus" value="0.5"
+                         class="Rinput" disabled>
+                    <output for="idv1plus" id="idv1plusValue">V (initial voltage)</output>
+                </td>
+                <td class="col-3">
+                    <p></p>
+                </td>
+                <td class="col-4">
+                    <p></p>
+                </td>
+            </tr>
+            <tr>
+                <td class="col-1">
+                    <label for="idvss">v<sub>ss</sub> &nbsp;</label>
+                </td>
+                <td class="col-2">
+                    <input type="number" id="idvss" value="0.75"
+                         class="Rinput" disabled>
+                    <output for="idvss" id="idvssValue">V (steady state)</output>
+                </td>
+                <td class="col-3">
+                    <p></p>
+                </td>
+                <td class="col-4">
+                    <p></p>
                 </td>
             </tr>
         </table>
@@ -109,7 +193,18 @@
     <p id="values" style="text-align:center"></p>
     <p id="demo2"></p>
 
+
+
 <script>
+
+
+function vgUpdate(value) {
+    v_g = Number(value);
+    console.log(value, v_g);
+    update_params();
+    set_axes();
+    drawAll();
+}
 
 function RgUpdate(value) {
     var temp = Gamma_from_R(Number(value));
@@ -118,7 +213,6 @@ function RgUpdate(value) {
     document.querySelector('#idGammag').value = temp;
     update_params();
     if (!timerRunning) drawAll();
-
 }
 
 function RLUpdate(value) {
@@ -168,23 +262,24 @@ function v_steadystate() {
 }
 
 function update_params() {
-    //console.log(Gammag(), Rg(), GammaL(), RL());
     calc_delta_voltages();
-    //console.log(v_delta);
-    var text = "Z<sub>0</sub> = " + Z0 + " &Omega;";
-    text += "<br />";
-    text += "<br />";
+    // var text = "";
+    // text += "Z<sub>0</sub> = " + Z0 + " &Omega;";
+    // text += "<br />";
+    // text += "<br />";
     // text += "&Gamma;<sub>g</sub> = " + Gammag().toFixed(2) + ", R<sub>g</sub> = " + Rg().toFixed(2) + " &Omega;";
     // text += "<br />";
     // text += "&Gamma;<sub>L</sub> = " + GammaL().toFixed(2) + ", R<sub>L</sub> = " + RL().toFixed(2) + " &Omega;";
     // text += "<br />";
     // text += "<br />";
-    text += "v<sub>g</sub> = " + v_g.toFixed(2) + " V";
-    text += "<br />";
-    text += "v<sup>+</sup><sub>1</sub> = " + v1_plus().toFixed(2) + " V";
-    text += "<br />";
-    text += "v<sub>steady state</sub> = " + v_steadystate().toFixed(2) + " V";
-    document.getElementById("values").innerHTML = text;
+    // text += "v<sub>g</sub> = " + v_g.toFixed(2) + " V";
+    // text += "<br />";
+    // text += "v<sup>+</sup><sub>1</sub> = " + v1_plus().toFixed(2) + " V";
+    // text += "<br />";
+    // text += "v<sub>steady state</sub> = " + v_steadystate().toFixed(2) + " V";
+    // document.getElementById("values").innerHTML = text;
+    document.querySelector('#idv1plus').value = v1_plus().toFixed(2);
+    document.querySelector('#idvss').value = v_steadystate().toFixed(2);
 }
 
 function R_from_Gamma(g) {
@@ -219,19 +314,23 @@ function GammagUpdate(value) {
 
 var canvas = document.getElementById("canvas");
 var ctx = canvas.getContext("2d");
-var frac_max_x = 0.85;
+var frac_max_x = 0.8;
 var frac_max_y = 0.75;
 var axes={};
 axes.x0 = canvas.width * (1-frac_max_x)/2;  // x0 pixels from left to x=0
 axes.y0 = canvas.height * (frac_max_y + (1-frac_max_y)/2); // y0 pixels from top to y=0
-axes.zmin = 0.;
-axes.zmax = 30.;
-axes.vmin = 0.0;
-axes.vmax = 2.1;
-axes.zrange = axes.zmax - axes.zmin;
-axes.vrange = axes.vmax - axes.vmin;
-axes.zscale = canvas.width * frac_max_x / axes.zrange;  // # canvas pixels per unit in z
-axes.vscale = canvas.height * frac_max_y / axes.vrange;  // # canvas pixels per unit in v
+set_axes();
+
+function set_axes() {
+    axes.zmin = 0.;
+    axes.zmax = 30.;
+    axes.vmin = 0.0;
+    axes.vmax = v_g*2.1;
+    axes.zrange = axes.zmax - axes.zmin;
+    axes.vrange = axes.vmax - axes.vmin;
+    axes.zscale = canvas.width * frac_max_x / axes.zrange;  // # canvas pixels per unit in z
+    axes.vscale = canvas.height * frac_max_y / axes.vrange;  // # canvas pixels per unit in v
+}
 
 
 var num_roundtrips = 40;
@@ -268,11 +367,6 @@ function calc_delta_voltages() {
     }
 }
 
-
-var velocity_mps = 2e8;
-var current_time = 0.0;
-var n_samp_one_temporal_cycle = 60;
-
 var framecounter = 0;
 drawAll();
 var timerRunning = false;
@@ -308,8 +402,8 @@ function drawTextOnGraph() {
     ctx.textBaseline = "middle";
     ctx.font = "15px Arial";
     ctx.fillStyle = "black";
-    ctx.fillText("t = " + timeInUnitsOfT().toFixed(2) + " T",to_x(2),to_y(2.1));
-    ctx.fillText("v(" + z[numpnts-1].toFixed(0) + ") = " + voltage[numpnts-1].toFixed(3) + " V", to_x(23),to_y(2.1) );
+    ctx.fillText("t = " + timeInUnitsOfT().toFixed(2) + " T",to_x(2),to_y(axes.vmax));
+    ctx.fillText("v(" + z[numpnts-1].toFixed(0) + ") = " + voltage[numpnts-1].toFixed(3) + " V", to_x(23),to_y(axes.vmax) );
     ctx.restore();
 }
 
@@ -361,14 +455,19 @@ function toggleButton() {
         document.getElementById("idTogButton").innerHTML = "Stop";
         document.getElementById("idGammag").disabled = true;
         document.getElementById("idGammaL").disabled = true;
+        document.getElementById("idSelectVoltage").disabled = true;
+        document.getElementById("idRg").disabled = true;
+        document.getElementById("idRL").disabled = true;
     };
 }
 
 function resetButton() {
     framecounter = 0;
-    current_time = framecounter / n_samp_one_temporal_cycle;
     document.getElementById("idGammag").disabled = false;
     document.getElementById("idGammaL").disabled = false;
+    document.getElementById("idSelectVoltage").disabled = false;
+    document.getElementById("idRg").disabled = false;
+    document.getElementById("idRL").disabled = false;
     set_voltage_to_0();
     calc_delta_voltages();
     drawAll();
@@ -382,10 +481,10 @@ function drawAxes() {
     ctx.moveTo(to_x(0),to_y(axes.vmin)); ctx.lineTo(to_x(0),to_y(axes.vmax)); // v axis on left
     ctx.moveTo(to_x(axes.zmax),to_y(axes.vmin)); ctx.lineTo(to_x(axes.zmax),to_y(axes.vmax)); // v axis on right
     for (var i = 0; i <= axes.zmax; i++) { // major & minor tic marks on horizontal axis
-        var half_tic = i % 5 ? 0.03 : 0.06;
+        var half_tic = i % 5 ? 0.015*axes.vmax : 0.025*axes.vmax;
         ctx.moveTo(to_x(i*1.0),to_y(half_tic)); ctx.lineTo(to_x(i*1.0),to_y(-half_tic));
     }
-    for (var i=0; i <= 21; i+=2) {
+    for (var i=0; i <= axes.vmax*10; i+=2) {
         var half_tic = i % 5 ? 0.15 : 0.25;
         ctx.moveTo(to_x(axes.zmin-half_tic),to_y(i/10));
         ctx.lineTo(to_x(axes.zmin+half_tic),to_y(i/10));
@@ -399,28 +498,31 @@ function drawAxes() {
     ctx.font = "15px Arial";
     ctx.fillStyle = "#000000";
     ctx.textAlign = "center";
-    // Horizontal axis label
-    ctx.fillText("z (m)", to_x(axes.zrange/2), to_y(-0.28));
+    // Vertical axis label tic labels
+    vto = 0.8;
+    for (var i=0; i<=Math.floor(axes.vmax); i++) {
+        ctx.fillText(i.toFixed(0),to_x(axes.zmin-vto),to_y(i));
+        ctx.fillText(i.toFixed(0),to_x(axes.zmax+vto),to_y(i));
+    }
     // Vertical axis label
     ctx.save();
     ctx.translate(to_x(0),to_y(0));
     ctx.rotate(-Math.PI/2);
-    ctx.fillText("Voltage (V)", 130, -30);
+    ctx.fillText("Voltage (V)", 130, -35);
     ctx.restore();
     // Horizontal axis label tic labels
     ctx.font = "12px Arial";
-    ctx.fillText("0",to_x(0),to_y(-0.15));
-    ctx.fillText("5",to_x(axes.zmax/6),to_y(-0.15));
-    ctx.fillText("10",to_x(axes.zmax*2/6),to_y(-0.15));
-    ctx.fillText("15",to_x(axes.zmax*3/6),to_y(-0.15));
-    ctx.fillText("20",to_x(axes.zmax*4/6),to_y(-0.15));
-    ctx.fillText("25",to_x(axes.zmax*5/6),to_y(-0.15));
-    ctx.fillText("30",to_x(axes.zmax),to_y(-0.15));
-    // Vertical axis label tic labels
-    vto = 0.6;
-    ctx.fillText("0",to_x(axes.zmin-vto),to_y(0)); ctx.fillText("0",to_x(axes.zmax+vto),to_y(0));
-    ctx.fillText("1",to_x(axes.zmin-vto),to_y(1)); ctx.fillText("1",to_x(axes.zmax+vto),to_y(1));
-    ctx.fillText("2",to_x(axes.zmin-vto),to_y(2)); ctx.fillText("2",to_x(axes.zmax+vto),to_y(2));
+    var hTicLabelOffsetFactor = -0.06;
+    var vto = axes.vmax * hTicLabelOffsetFactor;
+    ctx.fillText("0",to_x(0),to_y(vto));
+    ctx.fillText("5",to_x(axes.zmax/6),to_y(vto));
+    ctx.fillText("10",to_x(axes.zmax*2/6),to_y(vto));
+    ctx.fillText("15",to_x(axes.zmax*3/6),to_y(vto));
+    ctx.fillText("20",to_x(axes.zmax*4/6),to_y(vto));
+    ctx.fillText("25",to_x(axes.zmax*5/6),to_y(vto));
+    ctx.fillText("30",to_x(axes.zmax),to_y(vto));
+    // Horizontal axis label
+    ctx.fillText("z (m)", to_x(axes.zrange/2), to_y(vto*2.1));
 }
 
 //----------------------------------------
