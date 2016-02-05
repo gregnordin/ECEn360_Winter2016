@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html>
+<meta  content="text/html; charset=UTF-8"  http-equiv="content-type">
+<head>
+    <title>T-Line Voltage Pulse</title>
+
+    <style>
+        fieldset {background-color:lightgrey;
+                  width:420px;
+                  margin:auto;
+                  text-align:left;
+                }
+        legend {background-color:white;
+                border:2px solid grey;
+                padding-left: 5px;
+                padding-right: 5px;
+               }
+        button {background-color:lightblue;
+               border:2px solid grey;
+               padding-left: 5px;
+               padding-right: 5px;
+              }
+        table {
+            /* make the border continuous (without gaps between columns) */
+            border-collapse: collapse;
+        }
+        tr.separated td {
+            /* set border style for separated rows */
+            border-bottom: 1px solid grey;
+        }
+        .params {
+            table-layout: fixed;
+            width: 100%;
+            white-space: nowrap;
+            cellspacing: 5px;
+            cellpadding: 5px;
+        }
+        .params td {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .params .col-1 {
+            width: 10%;
+            text-align: right;
+        }
+        .params .col-2 {
+            width: 40%;
+        }
+        .params .col-3 {
+            width: 10%;
+            text-align: right;
+        }
+        .params .col-4 {
+            width: 30%;
+        }
+        .Rinput {
+            width: 60px;
+        }
+    </style>
+
+</head>
+<body>
+<div style="text-align:center" width:700px margin:auto>
+    <h2>Voltage Pulse on a Transmission Line</h2>
+    <!-- <canvas id="canvas_tline_fig" width="500" height="150"></canvas>
+    <p> </p> -->
+    <canvas id="canvas" width="600" height="300"></canvas>
+    <p> </p>
+    <button id="idTogButton" onclick="toggleButton()">Start</button>
+    <button id="idResetButton" onclick="resetButton()">Reset</button>
+    <br />
+    <br />
+
+    <fieldset>
+        <legend>Parameters</legend>
+
+        <table class="params">
+            <!-- <col class="col-1" />
+            <col class="col-2" /> -->
+            <tr>
+                <td class="col-1">
+                    <label for="idSelectVoltage">v<sub>g</sub> &nbsp;</label>
+                </td>
+                <td class="col-2">
+                    <select name="vglist" id="idSelectVoltage" oninput="vgUpdate(value)">
+                        <option value="1.0">1.0 V</option>
+                        <option value="3.3">3.3 V</option>
+                        <option value="5.0">5.0 V</option>
+                    </select>
+                </td>
+                <td class="col-3">
+                    <p></p>
+                </td>
+                <td class="col-4">
+                    <p></p>
+                </td>
+            </tr>
+            <tr>
+                <td class="col-1">
+                    <label for="idGammag">&#915;<sub>g</sub> &nbsp;</label>
+                </td>
+                <td class="col-2">
+                    <input type="range" id="idGammag" min="-1" max="0.99" value="0"
+                         step="any" oninput="GammagUpdate(value)">
+                    <output for="idGammag" id="idGammagValue">0</output>
+                </td>
+                <td class="col-3">
+                    <label for="idRg">R<sub>g</sub> &nbsp;</label>
+                </td>
+                <td class="col-4">
+                    <input type="number" id="idRg" min="0" value="50"
+                         class="Rinput" oninput="RgUpdate(value)">
+                    <output for="idRg" id="idRgValue">&Omega;</output>
+                </td>
+            </tr>
+            <tr>
+                <td class="col-1">
+                    <label for="idGammaL">&#915;<sub>L</sub> &nbsp;</label>
+                </td>
+                <td class="col-2">
+                    <input type="range" id="idGammaL" min="-1" max="0.99" value="0.5"
+                           step="any" oninput="GammaLUpdate(value)">
+                    <output for="idGammaL" id="idGammaLValue">0.8</output>
+                </td>
+                <td class="col-3">
+                    <label for="idRL">R<sub>L</sub> &nbsp;</label>
+                </td>
+                <td class="col-4">
+                    <input type="number" id="idRL" min="0" value="150"
+                         class="Rinput" oninput="RLUpdate(value)">
+                    <output for="idRL" id="idRLValue">&Omega;</output>
+                </td>
+            </tr>
+            <tr class="separated">
+                <td><p></p></td> <td><p></p></td> <td><p></p></td> <td><p></p></td>
+            </tr>
+            <tr>
+                <td><p></p></td> <td><p></p></td> <td><p></p></td> <td><p></p></td>
+            </tr>
+            <tr>
+                <td class="col-1">
+                    <label for="idZ0">Z<sub>0</sub> &nbsp;</label>
+                </td>
+                <td class="col-2">
+                    <input type="number" id="idZ0" value="50"
+                         class="Rinput" disabled>
+                    <output for="idZ0" id="idZ0Value">&Omega;</output>
+                </td>
+                <td class="col-3">
+                    <p></p>
+                </td>
+                <td class="col-4">
+                    <p></p>
+                </td>
+            </tr>
+            <tr>
+                <td class="col-1">
+                    <label for="idv1plus">v<sup>+</sup><sub>1</sub> &nbsp;</label>
+                </td>
+                <td class="col-2">
+                    <input type="number" id="idv1plus" value="0.5"
+                         class="Rinput" disabled>
+                    <output for="idv1plus" id="idv1plusValue">V (initial voltage)</output>
+                </td>
+                <td class="col-3">
+                    <p></p>
+                </td>
+                <td class="col-4">
+                    <p></p>
+                </td>
+            </tr>
+            <tr>
+                <td class="col-1">
+                    <label for="idvss">v<sub>ss</sub> &nbsp;</label>
+                </td>
+                <td class="col-2">
+                    <input type="number" id="idvss" value="0.75"
+                         class="Rinput" disabled>
+                    <output for="idvss" id="idvssValue">V (steady state)</output>
+                </td>
+                <td class="col-3">
+                    <p></p>
+                </td>
+                <td class="col-4">
+                    <p></p>
+                </td>
+            </tr>
+        </table>
+    </fieldset>
+</div>
+
+    <p id="values" style="text-align:center"></p>
+    <p id="demo2"></p>
+
+
+
+<script>
+
+var Z0 = 50;
+var v_g = 1.0;
+update_params();
+
+//draw_tline_fig();
+
+function GammaL() {
+    return Number(document.querySelector('#idGammaL').value);
+}
+
+function Gammag() {
+    return Number(document.querySelector('#idGammag').value);
+}
+
+function RL() {
+    return R_from_Gamma(GammaL());
+}
+
+function Rg() {
+    return R_from_Gamma(Gammag());
+}
+
+function v1_plus() {
+    return v_g * Z0 / (Z0 + Rg());
+}
+
+function v_steadystate() {
+    if (GammaL() == 1) {
+        return v_g;
+    } else {
+        return v_g * RL() / (RL() + Rg());
+    }
+}
+
+function update_params() {
+    calc_delta_voltages();
+    document.querySelector('#idv1plus').value = v1_plus().toFixed(2);
+    document.querySelector('#idvss').value = v_steadystate().toFixed(2);
+}
+
+function R_from_Gamma(g) {
+    return Z0 * (1.0 + g) / (1.0 - g);
+}
+
+function Gamma_from_R(R) {
+    return (R-Z0) / (R+Z0);
+}
+
+function vgUpdate(value) {
+    v_g = Number(value);
+    console.log(value, v_g);
+    update_params();
+    set_axes();
+    drawAll();
+}
+
+function GammaLUpdate(value) {
+	document.querySelector('#idGammaLValue').innerHTML = Number(value).toFixed(2);
+    var temp = R_from_Gamma(Number(value));
+    document.querySelector('#idRL').value = RL().toFixed(1);
+    update_params();
+    if (!timerRunning) drawAll();
+}
+
+function GammagUpdate(value) {
+	document.querySelector('#idGammagValue').innerHTML = Number(value).toFixed(2);
+    var temp = R_from_Gamma(Number(value));
+    document.querySelector('#idRg').value = temp.toFixed(1);
+    update_params();
+    if (!timerRunning) drawAll();
+}
+
+function RgUpdate(value) {
+    var temp = Gamma_from_R(Number(value));
+    console.log(Z0, value, temp, Gamma_from_R(value));
+    document.querySelector('#idGammagValue').innerHTML = temp.toFixed(2);
+    document.querySelector('#idGammag').value = temp;
+    update_params();
+    if (!timerRunning) drawAll();
+}
+
+function RLUpdate(value) {
+    var temp = Gamma_from_R(Number(value));
+    console.log(Z0, value, temp, Gamma_from_R(value));
+    document.querySelector('#idGammaLValue').innerHTML = temp.toFixed(2);
+    document.querySelector('#idGammaL').value = temp;
+    update_params();
+    if (!timerRunning) drawAll();
+
+}
+
+
+var canvas = document.getElementById("canvas");
+var ctx = canvas.getContext("2d");
+var frac_max_x = 0.8;
+var frac_max_y = 0.75;
+var axes={};
+axes.x0 = canvas.width * (1-frac_max_x)/2;  // x0 pixels from left to x=0
+axes.y0 = canvas.height * (frac_max_y/2 + (1-frac_max_y)/2);// + (1-frac_max_y)/2); // y0 pixels from top to y=0
+set_axes();
+
+function set_axes() {
+    axes.zmin = 0.;
+    axes.zmax = 30.;
+    axes.vmin = -v_g*2.1;
+    axes.vmax = v_g*2.1;
+    axes.zrange = axes.zmax - axes.zmin;
+    axes.vrange = axes.vmax - axes.vmin;
+    axes.zscale = canvas.width * frac_max_x / axes.zrange;  // # canvas pixels per unit in z
+    axes.vscale = canvas.height * frac_max_y / axes.vrange;  // # canvas pixels per unit in v
+}
+
+
+var num_roundtrips = 5;
+var v_delta = [];
+for (i=0; i<=2*num_roundtrips; i++) {
+    v_delta.push(0);
+}
+calc_delta_voltages();
+for (i=0; i<=2*num_roundtrips; i++) {
+    console.log(i, v_delta[i]);
+}
+var numpnts = 100;
+var voltage = [];
+for (var i=0; i<numpnts; i++) {
+    voltage.push(0);
+}
+var z = [];
+for (var i=0; i<numpnts; i++) {
+    z.push(axes.zmin + (axes.zmax - axes.zmin)*i/(numpnts-1));
+}
+
+function calc_delta_voltages() {
+    // v_delta[0] += v1_plus();
+    for (var i=0; i<=num_roundtrips*2; i++) {
+        if (i == 0) {
+            v_delta[i] = v1_plus();
+        } else {
+                if (isOdd(i)) {
+                var gamma = GammaL();
+            } else {
+                var gamma = Gammag();
+            }
+            v_delta[i] = gamma * v_delta[i-1];
+        }
+    }
+}
+
+var framecounter = 0;
+var num_frames_per_L = 100;  // number of frames to go from z=0 to z=L (end of t-line)
+// var T = num_frames_per_L;
+var u_pnts_per_frame = 1;
+var T = numpnts / u_pnts_per_frame;
+var u_z_per_frame = axes.zrange / T; // velocity in z per frame
+var pulse_length_T = 0.4; // pulse length in units of T
+var pulse_length_numpnts = numpnts * pulse_length_T; // pulse length in units of points on plot
+var pulse_length_z = pulse_length_T * axes.zrange; // pulse length in units of z
+console.log(T, pulse_length_T, pulse_length_numpnts, pulse_length_z, u_z_per_frame);
+drawAll();
+var timerRunning = false;
+redrawAll();
+
+function pulse_forward(a) {
+    // console.log(framecounter, a, pulse_length_z);
+    if ((a < 0) && (a > -pulse_length_z)) {
+        return 1.0;
+    } else {
+        return 0.0;
+    }
+}
+
+function pulse_reverse(a) {
+    // console.log(framecounter, a, pulse_length_z);
+    if ((a > 0) && (a < pulse_length_z)) {
+        return 1.0;
+    } else {
+        return 0.0;
+    }
+}
+
+function pulse(a, forward) {
+    // console.log(framecounter, a, pulse_length_z);
+    var result;
+    if (forward) {
+        result = (a < 0) && (a > -pulse_length_numpnts) ? 1.0 : 0.0;
+    }
+    else {
+        result = (a > 0) && (a < pulse_length_numpnts) ? 1.0 : 0.0;
+    }
+    return result;
+}
+
+
+function drawAll() {
+    calcV();
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    // ctx.fillStyle = "#ccffff";
+    // ctx.fillRect(0,0,canvas.width,canvas.height);
+    drawAxes();
+    drawLinePath();
+    drawTextOnGraph();
+}
+
+function redrawAll() {
+    if (timerRunning) {
+        //document.getElementById("values").innerHTML = framecounter;
+        drawAll();
+        framecounter++;
+    };
+    requestAnimationFrame(redrawAll);
+}
+
+// coordinate transformation from plot coordinates to canvas coordinates
+function to_x(xplot) {return xplot*axes.zscale + axes.x0;}
+function to_y(yplot) {return -yplot*axes.vscale + axes.y0;}
+
+function drawTextOnGraph() {
+    ctx.save();
+    ctx.fillStyle = "#ffffff";
+    ctx.textAlign = "left";
+    ctx.textBaseline = "middle";
+    ctx.font = "15px Arial";
+    ctx.fillStyle = "black";
+    ctx.fillText("t = " + timeInUnitsOfT().toFixed(2) + " T",to_x(2),to_y(axes.vmax));
+    ctx.fillText("v(" + z[numpnts-1].toFixed(0) + ") = " + voltage[numpnts-1].toFixed(3) + " V", to_x(23),to_y(axes.vmax) );
+    ctx.restore();
+}
+
+function timeInUnitsOfT() {
+    return framecounter / T; //numpnts;
+    // return framecounter / num_frames_per_L; //numpnts;
+}
+
+// Calculate the voltage at the current time and position
+function calcV() {
+    set_voltage_to_0();
+    for (var ii=0; ii<numpnts; ii++) {
+        if (framecounter < T + pulse_length_numpnts) {
+            voltage[ii] += v_delta[0] * pulse(ii - u_pnts_per_frame*framecounter, true);
+            // voltage[ii] += v_delta[0] * pulse_forward(z[ii] - u_z_per_frame*framecounter);
+            // console.log(framecounter, "a", ii, ii - u_pnts_per_frame*framecounter, voltage[ii])
+        }
+        var temp=1.0;
+        if ((framecounter >= T) && (framecounter < 2*T + pulse_length_numpnts)) {
+            voltage[ii] += v_delta[1] * pulse((numpnts-ii) - u_pnts_per_frame*(framecounter-T), true);
+        }
+        if ((framecounter >= 2*T) && (framecounter < 3*T + pulse_length_numpnts)) {
+            voltage[ii] += v_delta[2] * pulse((ii) - u_pnts_per_frame*(framecounter-2*T), true);
+        }
+        if ((framecounter >= 3*T) && (framecounter < 4*T + pulse_length_numpnts)) {
+            voltage[ii] += v_delta[3] * pulse((numpnts-ii) - u_pnts_per_frame*(framecounter-3*T), true);
+        }
+        if ((framecounter >= 4*T) && (framecounter < 5*T + pulse_length_numpnts)) {
+            voltage[ii] += v_delta[4] * pulse((ii) - u_pnts_per_frame*(framecounter-4*T), true);
+        }
+        if ((framecounter >= 5*T) && (framecounter < 6*T + pulse_length_numpnts)) {
+            voltage[ii] += v_delta[5] * pulse((numpnts-ii) - u_pnts_per_frame*(framecounter-5*T), true);
+        }
+    }
+    // if (timerRunning) {
+    //     var ii = framecounter % numpnts;
+    //     var trip_number = Math.floor(framecounter/numpnts);
+    //     if (isOdd(trip_number)) {
+    //         ii = (numpnts-1) - ii;
+    //     }
+    //     voltage[ii] += v_delta[trip_number];
+    //     // console.log(framecounter, trip_number, ii, voltage.length, v_delta[trip_number], isOdd(trip_number), framecounter % numpnts)
+    //     //
+    // }
+}
+
+function isOdd(num) { return (num % 2) == 1; }
+
+function set_voltage_to_0() {
+    for (var i=0; i<numpnts; i++) {
+        voltage[i] = 0;
+    }
+}
+
+function drawLinePath() {
+    ctx.beginPath();
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = "blue";
+    ctx.moveTo(to_x(z[0]),to_y(voltage[0]));
+    for (var i=1;i<=voltage.length;i++) {
+        ctx.lineTo(to_x(z[i]),to_y(voltage[i]));
+    }
+    ctx.stroke();
+}
+
+function toggleButton() {
+    if (timerRunning) {
+        timerRunning = false;
+        //document.getElementById("demo2").innerHTML = "Timer is stopped";
+        document.getElementById("idTogButton").innerHTML = "Start";
+    } else {
+        timerRunning = true;
+        //document.getElementById("demo2").innerHTML = "Timer is running";
+        document.getElementById("idTogButton").innerHTML = "Stop";
+        document.getElementById("idGammag").disabled = true;
+        document.getElementById("idGammaL").disabled = true;
+        document.getElementById("idSelectVoltage").disabled = true;
+        document.getElementById("idRg").disabled = true;
+        document.getElementById("idRL").disabled = true;
+    };
+}
+
+function resetButton() {
+    framecounter = 0;
+    document.getElementById("idGammag").disabled = false;
+    document.getElementById("idGammaL").disabled = false;
+    document.getElementById("idSelectVoltage").disabled = false;
+    document.getElementById("idRg").disabled = false;
+    document.getElementById("idRL").disabled = false;
+    set_voltage_to_0();
+    calc_delta_voltages();
+    drawAll();
+};
+
+function selectedVoltage() {
+    return document.getElementById("idSelectVoltage").value;
+}
+
+function drawAxes() {
+    ctx.beginPath();
+    ctx.strokeStyle = "rgb(0,0,0)";
+    ctx.lineWidth=0.5;
+    ctx.moveTo(to_x(axes.zmin),to_y(axes.vmin)); ctx.lineTo(to_x(axes.zmax),to_y(axes.vmin)); // z axis
+    ctx.moveTo(to_x(0),to_y(axes.vmin)); ctx.lineTo(to_x(0),to_y(axes.vmax)); // v axis on left
+    ctx.moveTo(to_x(axes.zmax),to_y(axes.vmin)); ctx.lineTo(to_x(axes.zmax),to_y(axes.vmax)); // v axis on right
+    // major & minor tic marks on horizontal axis
+    for (var i = 0; i <= axes.zmax; i++) {
+        var half_tic = i % 5 ? 0.015*axes.vrange : 0.025*axes.vrange;
+        ctx.moveTo(to_x(i*1.0),to_y(axes.vmin+half_tic)); ctx.lineTo(to_x(i*1.0),to_y(axes.vmin-half_tic));
+    }
+    // major & minor tic marks on vertical axis
+    var vtickstep = selectedVoltage() == "5.0" ? 5 : 2; // reduce # of minor steps if v_g is 5V
+    var vtickmajorminor = vtickstep == 2 ? 5 : 2; // how many divisions for minor steps?
+    for (var i=Math.floor(axes.vmin+1)*10; i <= axes.vmax*10; i+=vtickstep) {
+        var half_tic = i % vtickmajorminor ? 0.15 : 0.25;
+        ctx.moveTo(to_x(axes.zmin-half_tic),to_y(i/10));
+        ctx.lineTo(to_x(axes.zmin+half_tic),to_y(i/10));
+        ctx.moveTo(to_x(axes.zmax-half_tic),to_y(i/10));
+        ctx.lineTo(to_x(axes.zmax+half_tic),to_y(i/10));
+    }
+    ctx.stroke();
+    // Set up text properties
+    ctx.textAlign = "left";
+    ctx.textBaseline = "middle";
+    ctx.font = "15px Arial";
+    ctx.fillStyle = "#000000";
+    ctx.textAlign = "center";
+    // Vertical axis label tic labels
+    var indexstep = selectedVoltage() == "1.0" ? 1 : 2;
+    var vto = 0.8;
+    for (var i=Math.floor(axes.vmin+1); i<=Math.floor(axes.vmax); i+=indexstep) {
+        ctx.fillText(i.toFixed(0),to_x(axes.zmin-vto),to_y(i));
+        ctx.fillText(i.toFixed(0),to_x(axes.zmax+vto),to_y(i));
+    }
+    // Vertical axis label
+    ctx.save();
+    ctx.translate(to_x(0),to_y(0));
+    ctx.rotate(-Math.PI/2);
+    ctx.fillText("Voltage (V)", 0, -35);
+    ctx.restore();
+    // Horizontal axis label tic labels
+    ctx.font = "12px Arial";
+    var hTicLabelOffsetFactor = -0.06;
+    var vto = axes.vrange * hTicLabelOffsetFactor;
+    ctx.fillText("0",to_x(0),to_y(axes.vmin+vto));
+    ctx.fillText("5",to_x(axes.zmax/6),to_y(axes.vmin+vto));
+    ctx.fillText("10",to_x(axes.zmax*2/6),to_y(axes.vmin+vto));
+    ctx.fillText("15",to_x(axes.zmax*3/6),to_y(axes.vmin+vto));
+    ctx.fillText("20",to_x(axes.zmax*4/6),to_y(axes.vmin+vto));
+    ctx.fillText("25",to_x(axes.zmax*5/6),to_y(axes.vmin+vto));
+    ctx.fillText("30",to_x(axes.zmax),to_y(axes.vmin+vto));
+    // Horizontal axis label
+    ctx.fillText("z (m)", to_x(axes.zrange/2), to_y(axes.vmin+vto*2.1));
+}
+
+//----------------------------------------
+// Draw transmission line figure
+//----------------------------------------
+
+function draw_tline_fig() {
+    var canvas_tline_fig = document.getElementById("canvas_tline_fig");
+    var ctx_tline_fig = canvas_tline_fig.getContext("2d");
+    //ctx_tline_fig.save();
+
+    // set up drawing
+    // ctx_tline_fig.fillStyle = "rgb(235,235,235)"; //"lightblue";
+    // ctx_tline_fig.fillRect(0,0,canvas_tline_fig.width,canvas_tline_fig.height);
+    var w = canvas_tline_fig.width;
+    var h = canvas_tline_fig.height;
+    ctx_tline_fig.translate(1.3*w/2,h/2);
+
+    // Basic circuit rectangle
+    var cw = 0.56*w; // circuit width
+    var ch = 0.4*h;  // circuit height
+    ctx_tline_fig.strokeStyle="black";
+    ctx_tline_fig.strokeRect(-cw/2,-ch/2, cw, ch);
+
+    // Text formatting
+    ctx_tline_fig.fillStyle = "black";
+    ctx_tline_fig.textAlign = "center";
+    ctx_tline_fig.textBaseline = "middle";
+    ctx_tline_fig.font = "15px Arial";
+
+    // Label characteristic impedance
+    ctx_tline_fig.fillText("Z\u2080",0,0);
+    //ctx_tline_fig.font = "10px Arial";
+    //ctx_tline_fig.fillText("0",0+9,6);
+
+    // Voltage source
+    var ces = 30; // circuit element size
+    draw_voltage_source(ctx_tline_fig, -cw/2, 0, ces/2);
+
+    // Load impedance
+    ctx_tline_fig.save();
+    ctx_tline_fig.fillStyle = "white";
+    ctx_tline_fig.fillRect(cw/2-ces/2,-ces/2, ces, ces);
+    ctx_tline_fig.strokeRect(cw/2-ces/2,-ces/2, ces, ces);
+    ctx_tline_fig.fillStyle = "black";
+    ctx_tline_fig.textAlign = "center";
+    ctx_tline_fig.fillText("Z",cw/2,0);
+    ctx_tline_fig.font = "10px Arial";
+    ctx_tline_fig.fillText("L",cw/2+9,6);
+    ctx_tline_fig.restore();
+
+    // t-line circle symbols
+    var cp = 0.12; // relative position of circles for t-line symbol
+    var cr = 6; // radius of t-line symbol circles
+    tline_circle(ctx_tline_fig, -cw/2+cw*cp, -ch/2, cr);
+    tline_circle(ctx_tline_fig,  cw/2-cw*cp, -ch/2, cr);
+    tline_circle(ctx_tline_fig, -cw/2+cw*cp,  ch/2, cr);
+    tline_circle(ctx_tline_fig,  cw/2-cw*cp,  ch/2, cr);
+
+    // z-axis
+    var zo = 1.6; //z axis offset factor (below drawing)
+    drawArrow(ctx_tline_fig, -cw/2+cw*cp,zo*ch/2,cw/2-cw*cp+20,zo*ch/2, 1, 8, "black");
+    ctx_tline_fig.beginPath();
+    var vl = 12; // vertical tick mark length
+    ctx_tline_fig.moveTo(-cw/2+cw*cp,zo*ch/2-vl/2);
+	ctx_tline_fig.lineTo(-cw/2+cw*cp,zo*ch/2+vl/2);
+    ctx_tline_fig.moveTo(cw/2-cw*cp,zo*ch/2-vl/2);
+	ctx_tline_fig.lineTo(cw/2-cw*cp,zo*ch/2+vl/2);
+    ctx_tline_fig.stroke();
+    ctx_tline_fig.fillText("z",cw/2-cw*cp+30,zo*ch/2);
+    var to = 10; // text offset
+    ctx_tline_fig.fillText("0 m",cw/2-cw*cp,zo*ch/2+vl/2+to);
+    ctx_tline_fig.fillText("-20 m",-cw/2+cw*cp,zo*ch/2+vl/2+to);
+
+    // draw arrows and v_+ and v_-
+    al = 50; // arrow length
+    tp = -30; // relative text position
+    zo = 2.0;
+    drawArrow(ctx_tline_fig, 0, -zo*ch/2, al, -zo*ch/2, 1, 10, "rgba(0,0,255,0.8)");
+    ctx_tline_fig.fillText("v\u207A(z,t)",tp,-zo*ch/2);
+    zo = 1.4;
+    drawArrow(ctx_tline_fig, al, -zo*ch/2, 0, -zo*ch/2, 1, 10, "rgba(255,0,0,0.8)");
+    ctx_tline_fig.fillText("v\u207B(z,t)",tp,-zo*ch/2);
+
+    // Reflection coefficient
+    var rrad = 10; // reverse arrow radius
+    var rlen = 15; // length of straight lines in reverse arrow
+    reverse_arrow(ctx_tline_fig, cw/2-cw*cp, 0, rrad, rlen, "grey");
+    var ts = -15; // shift text to left
+    ctx_tline_fig.fillText("\u0393",cw/2-cw*cp-rlen-rrad+ts,0);
+    ctx_tline_fig.save();
+    ctx_tline_fig.font = "10px Arial";
+    ctx_tline_fig.fillText("L",cw/2-cw*cp-rlen-rrad+ts+7,6);
+    ctx_tline_fig.restore();
+}
+
+function draw_voltage_source(ctx, x, y, radius) {
+    ctx.save();
+    ctx.fillStyle = "white";
+    ctx.strokeStyle = "black";
+    ctx.beginPath();
+    ctx.arc(x, y, radius, 0, 2 * Math.PI);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = "black";
+    ctx.font = "20px Arial";
+    ctx.fillText("~", x, y);
+    ctx.textAlign = "left";
+    ctx.font = "15px Arial";
+    var ls = -167; // label shift
+    ctx.fillText("v(t) = cos(2\u03C0[f\u22C5t-20/\u03BB])",x+ls, y);
+    ctx.restore();
+}
+
+function reverse_arrow(ctx, x, y, radius, straightlength, color) {
+    var rr = 10; // reverse arrow radius
+    var rl = 15; // reverse arrow length
+    ctx.save();
+    ctx.strokeStyle=color;
+    ctx.beginPath();
+    ctx.moveTo(x-radius-straightlength,y-radius);
+    ctx.lineTo(x-radius,y-radius);
+    ctx.arc(x-radius, y, radius, -Math.PI/2, Math.PI/2);
+    ctx.stroke();
+    drawArrow(ctx, x-radius,y+radius,x-radius-straightlength,y+radius, 1, 10, color);
+    ctx.restore();
+}
+
+function tline_circle(ctx, x, y, radius) {
+    ctx.save();
+    ctx.fillStyle = "white";
+    ctx.beginPath();
+    ctx.arc(x, y, radius, 0, 2 * Math.PI);
+    ctx.fill();
+    ctx.stroke();
+    ctx.restore();
+}
+
+function drawArrow(ctx, fromx, fromy, tox, toy, linewidth, headlength, color){
+    // Adapted from http://stackoverflow.com/questions/808826/draw-arrow-on-canvas-tag
+	//variables to be used when creating the arrow
+	var headlen = headlength;
+
+	var angle = Math.atan2(toy-fromy,tox-fromx);
+    ctx.save();
+
+	//starting path of the arrow from the start square to the end square and drawing the stroke
+	ctx.beginPath();
+	ctx.moveTo(fromx, fromy);
+	ctx.lineTo(tox, toy);
+	ctx.strokeStyle = color;
+	ctx.lineWidth = linewidth;
+	ctx.stroke();
+
+	//starting a new path from the head of the arrow to one of the sides of the point
+	ctx.beginPath();
+	ctx.moveTo(tox, toy);
+	ctx.lineTo(tox-headlen*Math.cos(angle-Math.PI/7),toy-headlen*Math.sin(angle-Math.PI/7));
+
+	//path from the side point of the arrow, to the other side point
+	ctx.lineTo(tox-headlen*Math.cos(angle+Math.PI/7),toy-headlen*Math.sin(angle+Math.PI/7));
+
+	//path from the side point back to the tip of the arrow, and then again to the opposite side point
+	ctx.lineTo(tox, toy);
+	ctx.lineTo(tox-headlen*Math.cos(angle-Math.PI/7),toy-headlen*Math.sin(angle-Math.PI/7));
+
+	//draws the paths created above
+	ctx.strokeStyle = color;
+	ctx.lineWidth = linewidth;
+	ctx.stroke();
+	ctx.fillStyle = color;
+	ctx.fill();
+    ctx.restore();
+}
+
+
+</script>
+
+</body>
+</html>
