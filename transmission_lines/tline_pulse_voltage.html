@@ -1,25 +1,34 @@
 <!DOCTYPE html>
 <html>
 <meta  content="text/html; charset=UTF-8"  http-equiv="content-type">
+
+<!-- Author: Greg Nordin
+     2/5/16
+     Purpose: Visualize voltage pulse on transmission line
+ -->
+
 <head>
     <title>T-Line Voltage Pulse</title>
 
     <style>
-        fieldset {background-color:lightgrey;
-                  width:420px;
-                  margin:auto;
-                  text-align:left;
-                }
-        legend {background-color:white;
-                border:2px solid grey;
-                padding-left: 5px;
-                padding-right: 5px;
-               }
-        button {background-color:lightblue;
-               border:2px solid grey;
-               padding-left: 5px;
-               padding-right: 5px;
-              }
+        fieldset {
+            background-color:lightgrey;
+            width:420px;
+            margin:auto;
+            text-align:left;
+        }
+        legend {
+            background-color:white;
+            border:2px solid grey;
+            padding-left: 5px;
+            padding-right: 5px;
+        }
+        button {
+            background-color:lightblue;
+            border:2px solid grey;
+            padding-left: 5px;
+            padding-right: 5px;
+        }
         table {
             /* make the border continuous (without gaps between columns) */
             border-collapse: collapse;
@@ -55,6 +64,7 @@
             width: 30%;
         }
         .Rinput {
+            /* set width of textboxes */
             width: 60px;
         }
     </style>
@@ -88,6 +98,22 @@
                         <option value="3.3">3.3 V</option>
                         <option value="5.0">5.0 V</option>
                     </select>
+                </td>
+                <td class="col-3">
+                    <p></p>
+                </td>
+                <td class="col-4">
+                    <p></p>
+                </td>
+            </tr>
+            <tr>
+                <td class="col-1">
+                    <label for="idtpulse">t<sub>pulse</sub> &nbsp;</label>
+                </td>
+                <td class="col-2">
+                    <input type="number" id="idtpulse" min="0" value="0.4"
+                        max="20" class="Rinput" oninput="tpulseUpdate(value)">
+                    <output for="idtpulse" id="idtpulseUnits">T</output>
                 </td>
                 <td class="col-3">
                     <p></p>
@@ -190,18 +216,176 @@
     </fieldset>
 </div>
 
-    <p id="values" style="text-align:center"></p>
-    <p id="demo2"></p>
+<p id="values" style="text-align:center"></p>
+<p id="demo2"></p>
 
 
 
 <script>
 
+//---------------------------------------------------------------------
+// Define and initialize parameters, start animation loop
+//---------------------------------------------------------------------
+
 var Z0 = 50;
 var v_g = 1.0;
 update_params();
 
+// Set up canvas and drawing area on canvas (values in "axes" are critical)
+var canvas = document.getElementById("canvas");
+var ctx = canvas.getContext("2d");
+var frac_max_x = 0.8;
+var frac_max_y = 0.75;
+var axes={};
+set_axes();
+
 //draw_tline_fig();
+
+// Set up v1plus, v1minus, v2plus, v2minus, etc in array v_delta
+var num_roundtrips = 15;
+var v_delta = [];
+for (i=0; i<=2*num_roundtrips; i++) {
+    v_delta.push(0);
+}
+calc_delta_voltages();
+print_delta_voltages();
+var v_tolerance = 0.01; // only use v_delta values greater than this
+
+// Set up voltage and z-axis arrays
+var numpnts = 100;
+var voltage = [];
+for (var i=0; i<numpnts; i++) {
+    voltage.push(0);
+}
+var z = [];
+for (var i=0; i<numpnts; i++) {
+    z.push(axes.zmin + (axes.zmax - axes.zmin)*i/(numpnts-1));
+}
+
+// Set up frame counter, velocity, T, pulse length (all in units of points)
+var framecounter = 0;
+var u_pnts_per_frame = 1; // velocity in points on z-axis traveled per frame
+var T = numpnts / u_pnts_per_frame; // how long it takes in frames to travel once down t-line
+var pulse_length_T = 0.4; // pulse length in units of T
+var pulse_length_numpnts; // pulse length in units of points on plot
+var pulse_length_z; // pulse length in units of z
+pulse_length_update(); // initialize pulse_length_numpnts & pulse_length_z
+console.log(T, pulse_length_T, pulse_length_numpnts, pulse_length_z);
+
+// Make initial drawing on Canvas
+drawAll();
+
+// Start animation loop
+var timerRunning = false;
+redrawAll();
+
+//---------------------------------------------------------------------
+// Set up main drawing functions
+//---------------------------------------------------------------------
+
+function drawAll() {
+    calcV();
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    // ctx.fillStyle = "#ccffff";
+    // ctx.fillRect(0,0,canvas.width,canvas.height);
+    drawAxes();
+    drawLinePath();
+    drawTextOnGraph();
+}
+
+function redrawAll() {
+    if (timerRunning) {
+        //document.getElementById("values").innerHTML = framecounter;
+        drawAll();
+        framecounter++;
+    };
+    requestAnimationFrame(redrawAll);
+}
+
+//---------------------------------------------------------------------
+// Calculate voltage on t-line
+//---------------------------------------------------------------------
+
+function calc_delta_voltages() {
+    // v_delta[0] = v1_plus();
+    for (var i=0; i<=num_roundtrips*2; i++) {
+        if (i==0) {
+            v_delta[i] = v1_plus();
+        }
+        else {
+            var gamma = isOdd(i) ? GammaL() : Gammag();
+            v_delta[i] = gamma * v_delta[i-1];
+        }
+    }
+}
+
+function pulse(a) {
+    return (a < 0) && (a > -pulse_length_numpnts) ? 1.0 : 0.0;
+}
+
+// Calculate the voltage at the current time and position
+function calcV() {
+    set_voltage_to_0();
+    for (var i=0; i<numpnts; i++) {
+        voltage[i] = voltage_at_i(i);
+    }
+}
+
+function set_voltage_to_0() {
+    for (var i=0; i<numpnts; i++) {
+        voltage[i] = 0;
+    }
+}
+
+function voltage_at_i(i) {
+    var j=0;
+    var temp_voltage = 0;
+    while ((Math.abs(v_delta[j]) > v_tolerance) && (j < v_delta.length)) {
+        if ((framecounter >= j*T) && (framecounter < (j+1)*T + pulse_length_numpnts)) {
+            var index = isOdd(j) ? numpnts-i : i;
+            temp_voltage += v_delta[j] * pulse(index - u_pnts_per_frame*(framecounter - j*T));
+        }
+        j++;
+    }
+    // console.log(framecounter,i,j,v_delta.length,v_delta[j-1],temp_voltage);
+    return temp_voltage;
+}
+
+//---------------------------------------------------------------------
+// Utility functions
+//---------------------------------------------------------------------
+
+// coordinate transformation from plot coordinates to canvas coordinates
+function to_x(xplot) {return xplot*axes.zscale + axes.x0;}
+function to_y(yplot) {return -yplot*axes.vscale + axes.y0;}
+
+function set_axes() {
+    axes.x0 = canvas.width * (1-frac_max_x)/2;  // x0 pixels from left to x=0
+    axes.y0 = canvas.height * (frac_max_y/2 + (1-frac_max_y)/2); // y0 pixels from top to y=0
+    axes.zmin = 0.;
+    axes.zmax = 30.;
+    axes.vmin = -v_g*2.1;
+    axes.vmax = v_g*2.1;
+    axes.zrange = axes.zmax - axes.zmin;
+    axes.vrange = axes.vmax - axes.vmin;
+    axes.zscale = canvas.width * frac_max_x / axes.zrange;  // # canvas pixels per unit in z
+    axes.vscale = canvas.height * frac_max_y / axes.vrange;  // # canvas pixels per unit in v
+}
+
+function isOdd(num) { return (num % 2) == 1; }
+
+function pulse_length_update() {
+    pulse_length_numpnts = numpnts * pulse_length_T; // pulse length in units of points on plot
+    pulse_length_z = pulse_length_T * axes.zrange; // pulse length in units of z
+}
+
+function print_delta_voltages() {
+    console.log("-----------start v_delta,", v_delta.length, "values-----------");
+    for (i=0; i<=2*num_roundtrips; i++) {
+        console.log(i, v_delta[i]);
+    }
+    console.log('-----------end v_delta-----------');
+}
 
 function GammaL() {
     return Number(document.querySelector('#idGammaL').value);
@@ -245,12 +429,60 @@ function Gamma_from_R(R) {
     return (R-Z0) / (R+Z0);
 }
 
+function timeInUnitsOfT() {
+    return framecounter / T; //numpnts;
+}
+
+function selectedVoltage() {
+    return document.getElementById("idSelectVoltage").value;
+}
+
+//---------------------------------------------------------------------
+// Callback functions for controls (buttons, sliders, textboxes, etc.)
+//---------------------------------------------------------------------
+
+function toggleButton() {
+    if (timerRunning) {
+        timerRunning = false;
+        //document.getElementById("demo2").innerHTML = "Timer is stopped";
+        document.getElementById("idTogButton").innerHTML = "Start";
+    } else {
+        timerRunning = true;
+        //document.getElementById("demo2").innerHTML = "Timer is running";
+        document.getElementById("idTogButton").innerHTML = "Stop";
+        document.getElementById("idGammag").disabled = true;
+        document.getElementById("idGammaL").disabled = true;
+        document.getElementById("idSelectVoltage").disabled = true;
+        document.getElementById("idtpulse").disabled = true;
+        document.getElementById("idRg").disabled = true;
+        document.getElementById("idRL").disabled = true;
+    };
+}
+
+function resetButton() {
+    framecounter = 0;
+    document.getElementById("idGammag").disabled = false;
+    document.getElementById("idGammaL").disabled = false;
+    document.getElementById("idSelectVoltage").disabled = false;
+    document.getElementById("idtpulse").disabled = false;
+    document.getElementById("idRg").disabled = false;
+    document.getElementById("idRL").disabled = false;
+    set_voltage_to_0();
+    calc_delta_voltages();
+    drawAll();
+};
+
 function vgUpdate(value) {
     v_g = Number(value);
     console.log(value, v_g);
     update_params();
     set_axes();
     drawAll();
+}
+
+function tpulseUpdate(value) {
+    pulse_length_T = Number(value);
+    pulse_length_update();
 }
 
 function GammaLUpdate(value) {
@@ -288,193 +520,9 @@ function RLUpdate(value) {
 
 }
 
-
-var canvas = document.getElementById("canvas");
-var ctx = canvas.getContext("2d");
-var frac_max_x = 0.8;
-var frac_max_y = 0.75;
-var axes={};
-axes.x0 = canvas.width * (1-frac_max_x)/2;  // x0 pixels from left to x=0
-axes.y0 = canvas.height * (frac_max_y/2 + (1-frac_max_y)/2);// + (1-frac_max_y)/2); // y0 pixels from top to y=0
-set_axes();
-
-function set_axes() {
-    axes.zmin = 0.;
-    axes.zmax = 30.;
-    axes.vmin = -v_g*2.1;
-    axes.vmax = v_g*2.1;
-    axes.zrange = axes.zmax - axes.zmin;
-    axes.vrange = axes.vmax - axes.vmin;
-    axes.zscale = canvas.width * frac_max_x / axes.zrange;  // # canvas pixels per unit in z
-    axes.vscale = canvas.height * frac_max_y / axes.vrange;  // # canvas pixels per unit in v
-}
-
-
-var num_roundtrips = 5;
-var v_delta = [];
-for (i=0; i<=2*num_roundtrips; i++) {
-    v_delta.push(0);
-}
-calc_delta_voltages();
-for (i=0; i<=2*num_roundtrips; i++) {
-    console.log(i, v_delta[i]);
-}
-var numpnts = 100;
-var voltage = [];
-for (var i=0; i<numpnts; i++) {
-    voltage.push(0);
-}
-var z = [];
-for (var i=0; i<numpnts; i++) {
-    z.push(axes.zmin + (axes.zmax - axes.zmin)*i/(numpnts-1));
-}
-
-function calc_delta_voltages() {
-    // v_delta[0] += v1_plus();
-    for (var i=0; i<=num_roundtrips*2; i++) {
-        if (i == 0) {
-            v_delta[i] = v1_plus();
-        } else {
-                if (isOdd(i)) {
-                var gamma = GammaL();
-            } else {
-                var gamma = Gammag();
-            }
-            v_delta[i] = gamma * v_delta[i-1];
-        }
-    }
-}
-
-var framecounter = 0;
-var num_frames_per_L = 100;  // number of frames to go from z=0 to z=L (end of t-line)
-// var T = num_frames_per_L;
-var u_pnts_per_frame = 1;
-var T = numpnts / u_pnts_per_frame;
-var u_z_per_frame = axes.zrange / T; // velocity in z per frame
-var pulse_length_T = 0.4; // pulse length in units of T
-var pulse_length_numpnts = numpnts * pulse_length_T; // pulse length in units of points on plot
-var pulse_length_z = pulse_length_T * axes.zrange; // pulse length in units of z
-console.log(T, pulse_length_T, pulse_length_numpnts, pulse_length_z, u_z_per_frame);
-drawAll();
-var timerRunning = false;
-redrawAll();
-
-function pulse_forward(a) {
-    // console.log(framecounter, a, pulse_length_z);
-    if ((a < 0) && (a > -pulse_length_z)) {
-        return 1.0;
-    } else {
-        return 0.0;
-    }
-}
-
-function pulse_reverse(a) {
-    // console.log(framecounter, a, pulse_length_z);
-    if ((a > 0) && (a < pulse_length_z)) {
-        return 1.0;
-    } else {
-        return 0.0;
-    }
-}
-
-function pulse(a, forward) {
-    // console.log(framecounter, a, pulse_length_z);
-    var result;
-    if (forward) {
-        result = (a < 0) && (a > -pulse_length_numpnts) ? 1.0 : 0.0;
-    }
-    else {
-        result = (a > 0) && (a < pulse_length_numpnts) ? 1.0 : 0.0;
-    }
-    return result;
-}
-
-
-function drawAll() {
-    calcV();
-    ctx.clearRect(0,0,canvas.width,canvas.height);
-    // ctx.fillStyle = "#ccffff";
-    // ctx.fillRect(0,0,canvas.width,canvas.height);
-    drawAxes();
-    drawLinePath();
-    drawTextOnGraph();
-}
-
-function redrawAll() {
-    if (timerRunning) {
-        //document.getElementById("values").innerHTML = framecounter;
-        drawAll();
-        framecounter++;
-    };
-    requestAnimationFrame(redrawAll);
-}
-
-// coordinate transformation from plot coordinates to canvas coordinates
-function to_x(xplot) {return xplot*axes.zscale + axes.x0;}
-function to_y(yplot) {return -yplot*axes.vscale + axes.y0;}
-
-function drawTextOnGraph() {
-    ctx.save();
-    ctx.fillStyle = "#ffffff";
-    ctx.textAlign = "left";
-    ctx.textBaseline = "middle";
-    ctx.font = "15px Arial";
-    ctx.fillStyle = "black";
-    ctx.fillText("t = " + timeInUnitsOfT().toFixed(2) + " T",to_x(2),to_y(axes.vmax));
-    ctx.fillText("v(" + z[numpnts-1].toFixed(0) + ") = " + voltage[numpnts-1].toFixed(3) + " V", to_x(23),to_y(axes.vmax) );
-    ctx.restore();
-}
-
-function timeInUnitsOfT() {
-    return framecounter / T; //numpnts;
-    // return framecounter / num_frames_per_L; //numpnts;
-}
-
-// Calculate the voltage at the current time and position
-function calcV() {
-    set_voltage_to_0();
-    for (var ii=0; ii<numpnts; ii++) {
-        if (framecounter < T + pulse_length_numpnts) {
-            voltage[ii] += v_delta[0] * pulse(ii - u_pnts_per_frame*framecounter, true);
-            // voltage[ii] += v_delta[0] * pulse_forward(z[ii] - u_z_per_frame*framecounter);
-            // console.log(framecounter, "a", ii, ii - u_pnts_per_frame*framecounter, voltage[ii])
-        }
-        var temp=1.0;
-        if ((framecounter >= T) && (framecounter < 2*T + pulse_length_numpnts)) {
-            voltage[ii] += v_delta[1] * pulse((numpnts-ii) - u_pnts_per_frame*(framecounter-T), true);
-        }
-        if ((framecounter >= 2*T) && (framecounter < 3*T + pulse_length_numpnts)) {
-            voltage[ii] += v_delta[2] * pulse((ii) - u_pnts_per_frame*(framecounter-2*T), true);
-        }
-        if ((framecounter >= 3*T) && (framecounter < 4*T + pulse_length_numpnts)) {
-            voltage[ii] += v_delta[3] * pulse((numpnts-ii) - u_pnts_per_frame*(framecounter-3*T), true);
-        }
-        if ((framecounter >= 4*T) && (framecounter < 5*T + pulse_length_numpnts)) {
-            voltage[ii] += v_delta[4] * pulse((ii) - u_pnts_per_frame*(framecounter-4*T), true);
-        }
-        if ((framecounter >= 5*T) && (framecounter < 6*T + pulse_length_numpnts)) {
-            voltage[ii] += v_delta[5] * pulse((numpnts-ii) - u_pnts_per_frame*(framecounter-5*T), true);
-        }
-    }
-    // if (timerRunning) {
-    //     var ii = framecounter % numpnts;
-    //     var trip_number = Math.floor(framecounter/numpnts);
-    //     if (isOdd(trip_number)) {
-    //         ii = (numpnts-1) - ii;
-    //     }
-    //     voltage[ii] += v_delta[trip_number];
-    //     // console.log(framecounter, trip_number, ii, voltage.length, v_delta[trip_number], isOdd(trip_number), framecounter % numpnts)
-    //     //
-    // }
-}
-
-function isOdd(num) { return (num % 2) == 1; }
-
-function set_voltage_to_0() {
-    for (var i=0; i<numpnts; i++) {
-        voltage[i] = 0;
-    }
-}
+//---------------------------------------------------------------------
+// Nitty-gritty drawing functions
+//---------------------------------------------------------------------
 
 function drawLinePath() {
     ctx.beginPath();
@@ -487,37 +535,16 @@ function drawLinePath() {
     ctx.stroke();
 }
 
-function toggleButton() {
-    if (timerRunning) {
-        timerRunning = false;
-        //document.getElementById("demo2").innerHTML = "Timer is stopped";
-        document.getElementById("idTogButton").innerHTML = "Start";
-    } else {
-        timerRunning = true;
-        //document.getElementById("demo2").innerHTML = "Timer is running";
-        document.getElementById("idTogButton").innerHTML = "Stop";
-        document.getElementById("idGammag").disabled = true;
-        document.getElementById("idGammaL").disabled = true;
-        document.getElementById("idSelectVoltage").disabled = true;
-        document.getElementById("idRg").disabled = true;
-        document.getElementById("idRL").disabled = true;
-    };
-}
-
-function resetButton() {
-    framecounter = 0;
-    document.getElementById("idGammag").disabled = false;
-    document.getElementById("idGammaL").disabled = false;
-    document.getElementById("idSelectVoltage").disabled = false;
-    document.getElementById("idRg").disabled = false;
-    document.getElementById("idRL").disabled = false;
-    set_voltage_to_0();
-    calc_delta_voltages();
-    drawAll();
-};
-
-function selectedVoltage() {
-    return document.getElementById("idSelectVoltage").value;
+function drawTextOnGraph() {
+    ctx.save();
+    ctx.fillStyle = "#ffffff";
+    ctx.textAlign = "left";
+    ctx.textBaseline = "middle";
+    ctx.font = "15px Arial";
+    ctx.fillStyle = "black";
+    ctx.fillText("t = " + timeInUnitsOfT().toFixed(2) + " T",to_x(2),to_y(axes.vmax));
+    ctx.fillText("v(" + z[numpnts-1].toFixed(0) + ") = " + voltage[numpnts-1].toFixed(3) + " V", to_x(23),to_y(axes.vmax) );
+    ctx.restore();
 }
 
 function drawAxes() {
@@ -579,6 +606,7 @@ function drawAxes() {
 
 //----------------------------------------
 // Draw transmission line figure
+// (2/5/16: unused for this visualization--needs updated)
 //----------------------------------------
 
 function draw_tline_fig() {
