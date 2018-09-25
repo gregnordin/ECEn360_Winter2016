@@ -52,8 +52,9 @@ w.addItem(plt_xaxis)
 
 ## make images
 image_shape = (8,8)
-uniform_values = np.ones(image_shape) * 255
+uniform_values = np.ones(image_shape, dtype=np.int) * 255
 uniform_image_transparent = pg.makeARGB(uniform_values)[0]
+uniform_image_transparent[:,:,:] = 255
 uniform_image_transparent[:,:,3] = 65
 v1 = gl.GLImageItem(uniform_image_transparent)
 v1.translate(-image_shape[0]/2, -image_shape[1]/2, 0)
@@ -70,7 +71,7 @@ for i in range(0,20):
     w.addItem(v[i])
 
 # Set up some animation parameters
-frametime = 50 # frame refresh time in ms
+frametime = 40 # frame refresh time in ms
 inv_frametime = 1./frametime
 counter = 0
 
