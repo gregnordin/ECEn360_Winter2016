@@ -1,4 +1,9 @@
-from PyQt4 import QtGui, QtCore
+#----------------------------------------------------------------------
+# # 9/25/18 - Update to use Python 3.6, PyQt5 and pyqtgraph 0.10.0
+# G. Nordin
+#----------------------------------------------------------------------
+
+from PyQt5 import QtGui, QtCore
 import pyqtgraph as pg
 import pyqtgraph.opengl as gl
 import numpy as np
@@ -120,7 +125,7 @@ pts_e_lines = np.dot(pts_e_lines, rot_efield_coord)
 z0 = np.zeros(len(z))
 pts_e_z0 = np.vstack([x,y,z0]).transpose()
 pts_e_z0 = np.dot(pts_e_z0, rot_efield_coord)
-pts_arrow = np.array( [[0.0, 0.0, 0.0], pts_e_z0[len(pts_e_z0)/2.0]] )
+pts_arrow = np.array( [[0.0, 0.0, 0.0], pts_e_z0[int(len(pts_e_z0)/2.0)]] )
 
 # Get ready to make plots
 efield_color = (1, 0, 0, 1)
@@ -168,11 +173,14 @@ pts_xaxis = np.vstack([y_xaxis,z_xaxis,xaxis]).transpose()
 plt_xaxis = gl.GLLinePlotItem(pos=pts_xaxis, color=axis_color, width=linewidthaxis, antialias=True)
 wGL.addItem(plt_xaxis)
 
-## make image for x-y plane
+# make image for x-y plane
 image_shape = (2,2)
-uniform_values = np.ones(image_shape) * 255
+uniform_values = np.ones(image_shape, dtype=np.int) * 255
+print(uniform_values)
 uniform_image_transparent = pg.makeARGB(uniform_values)[0]
-uniform_image_transparent[:,:,3] = 100
+uniform_image_transparent[:,:,:] = 255
+uniform_image_transparent[:,:,3] = 80
+print(uniform_image_transparent)
 v1 = gl.GLImageItem(uniform_image_transparent)
 v1.translate(-image_shape[0]/2., -image_shape[1]/2., 0)
 v1.rotate(90, 1,0,0)
@@ -200,7 +208,7 @@ def update():
     pts_e_z0 = np.vstack([x,y,z0]).transpose()
     pts_e_z0 = np.dot(pts_e_z0, rot_efield_coord)
     plt_e_z0.setData(pos=pts_e_z0)
-    pts_e_arrow = np.array( [[0.0, 0.0, 0.0], pts_e_z0[len(pts_e_z0)/2.0]] )
+    pts_e_arrow = np.array( [[0.0, 0.0, 0.0], pts_e_z0[int(len(pts_e_z0)/2.0)]] )
     plt_arrow.setData(pos=pts_e_arrow)
 
 # Set up timer for animation
