@@ -65,6 +65,19 @@ hBoxLayout.addItem(psi_slider_layout)
 hBoxLayout.addItem(delta_slider_layout)
 sliderbox.setLayout(hBoxLayout)
 
+# Box with options
+optionbox = QtGui.QGroupBox()
+vBoxLayout = QtGui.QVBoxLayout()
+
+# Options
+hfield_checkbox = QtGui.QCheckBox("Show H-field")
+
+# Add to layout
+vBoxLayout.addWidget(hfield_checkbox)
+# Add to box
+optionbox.setLayout(vBoxLayout)
+
+
 # Create openGL view widget & add a grid
 wGL = gl.GLViewWidget()
 wGL.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
@@ -80,6 +93,7 @@ layout.setColumnStretch (1, 2)
 ## Add widgets to the layout in their proper positions
 layout.addWidget(heading_text, 0, 0)   # heading text goes in upper-left
 layout.addWidget(sliderbox, 1, 0)   # slider box goes underneath heading text
+layout.addWidget(optionbox, 2, 0)   # option box goes underneath slider box
 layout.addWidget(wGL, 0, 1, 3, 1)  # wGL goes on right side, spanning 3 rows
 
 ## Display the widget as a new window
@@ -118,19 +132,35 @@ rot_efield_coord = np.array(temp2Darray)
 amplitude = 1.0
 z = np.linspace(-10, 10, 500)
 x, y, z = efield_arbpol(0.0,z,amplitude,psi_deg*degtorad,delta_deg*degtorad)
+# E-field
 pts_e = np.vstack([x,y,z]).transpose()
 pts_e_lines = preptomakelines(pts_e)
 pts_e = np.dot(pts_e, rot_efield_coord)
 pts_e_lines = np.dot(pts_e_lines, rot_efield_coord)
+
 z0 = np.zeros(len(z))
 pts_e_z0 = np.vstack([x,y,z0]).transpose()
 pts_e_z0 = np.dot(pts_e_z0, rot_efield_coord)
-pts_arrow = np.array( [[0.0, 0.0, 0.0], pts_e_z0[int(len(pts_e_z0)/2.0)]] )
+pts_e_arrow = np.array( [[0.0, 0.0, 0.0], pts_e_z0[int(len(pts_e_z0)/2.0)]] )
+
+# H-field
+pts_h = np.vstack([-y,x,z]).transpose()  # Orthogonal to E
+pts_h_lines = preptomakelines(pts_h)
+pts_h = np.dot(pts_h, rot_efield_coord)
+pts_h_lines = np.dot(pts_h_lines, rot_efield_coord)
+
+pts_h_z0 = np.vstack([-y,x,z0]).transpose()
+pts_h_z0 = np.dot(pts_h_z0, rot_efield_coord)
+pts_h_arrow = np.array( [[0.0, 0.0, 0.0], pts_h_z0[int(len(pts_h_z0)/2.0)]] )
+
 
 # Get ready to make plots
 efield_color = (1, 0, 0, 1)
 efield_color_z0 = (1, 1, 1, 1)
-efield_color_arrow = (1, 1, 1, 1)
+efield_color_arrow = (1, 0.67, 0.67, 1)
+hfield_color = (0, 0, 1, 1)
+hfield_color_z0 = (1, 1, 1, 1)
+hfield_color_arrow = (0.67, 0.67, 1, 1)
 linewidth = 4.0
 linewidth2Dpol = 2.0
 linewidth2Defieldvector = 10.0
@@ -142,8 +172,23 @@ wGL.addItem(plt_e)
 #wGL.addItem(plt_e_lines)
 plt_e_z0 = gl.GLLinePlotItem(pos=pts_e_z0, mode='line_strip', color=efield_color_z0, width=linewidth2Dpol, antialias=True)
 wGL.addItem(plt_e_z0)
-plt_arrow = gl.GLLinePlotItem(pos=pts_arrow, mode='line_strip', color=efield_color_arrow, width=linewidth2Defieldvector, antialias=True)
-wGL.addItem(plt_arrow)
+plt_e_arrow = gl.GLLinePlotItem(pos=pts_e_arrow, mode='line_strip', color=efield_color_arrow, width=linewidth2Defieldvector, antialias=True)
+wGL.addItem(plt_e_arrow)
+
+plt_h = gl.GLLinePlotItem(pos=pts_h, mode='line_strip', color=hfield_color, width=linewidth, antialias=True)
+wGL.addItem(plt_h)
+#plt_h_lines = gl.GLLinePlotItem(pos=pts_h_lines, mode='lines', color=hfield_color, width=linewidth, antialias=True)
+#wGL.addItem(plt_h_lines)
+plt_h_z0 = gl.GLLinePlotItem(pos=pts_h_z0, mode='line_strip', color=hfield_color_z0, width=linewidth2Dpol, antialias=True)
+wGL.addItem(plt_h_z0)
+plt_h_arrow = gl.GLLinePlotItem(pos=pts_h_arrow, mode='line_strip', color=hfield_color_arrow, width=linewidth2Defieldvector, antialias=True)
+wGL.addItem(plt_h_arrow)
+
+# Start with H-field items as invisible
+plt_h.setVisible(False)
+#plt_h_lines.setVisible(False)
+plt_h_z0.setVisible(False)
+plt_h_arrow.setVisible(False)
 
 # Add lines to visually define axes
 x_length = 1.1
@@ -194,7 +239,8 @@ counter = 0
 # Function to update scene for each frame
 def update():
     global z, z0, velocity, counter, amplitude
-    global plt_e, rot_efield_coord, plt_e_z0, plt_arrow #, plt_e_lines
+    global plt_e, rot_efield_coord, plt_e_z0, plt_e_arrow #, plt_e_lines
+    global plt_h,                   plt_h_z0, plt_h_arrow #, plt_h_lines
     global psi_deg, delta_deg, degtorad
     counter +=1
     time = float(counter)/frametime % 1
@@ -209,7 +255,31 @@ def update():
     pts_e_z0 = np.dot(pts_e_z0, rot_efield_coord)
     plt_e_z0.setData(pos=pts_e_z0)
     pts_e_arrow = np.array( [[0.0, 0.0, 0.0], pts_e_z0[int(len(pts_e_z0)/2.0)]] )
-    plt_arrow.setData(pos=pts_e_arrow)
+    plt_e_arrow.setData(pos=pts_e_arrow)
+    
+    pts_h = np.vstack([-y,x,z]).transpose()
+    pts_h_lines = preptomakelines(pts_h)
+    pts_h = np.dot(pts_h, rot_efield_coord)
+    #pts_h_lines = np.dot(pts_h_lines, rot_efield_coord)
+    plt_h.setData(pos=pts_h)
+    #plt_h_lines.setData(pos=pts_h_lines)
+    pts_h_z0 = np.vstack([-y,x,z0]).transpose()
+    pts_h_z0 = np.dot(pts_h_z0, rot_efield_coord)
+    plt_h_z0.setData(pos=pts_h_z0)
+    pts_h_arrow = np.array( [[0.0, 0.0, 0.0], pts_h_z0[int(len(pts_h_z0)/2.0)]] )
+    plt_h_arrow.setData(pos=pts_h_arrow)
+    
+    # Poor man's state updating
+    if hfield_checkbox.isChecked():
+        plt_h.setVisible(True)
+        #plt_h_lines.setVisible(True)
+        plt_h_z0.setVisible(True)
+        plt_h_arrow.setVisible(True)
+    else:
+        plt_h.setVisible(False)
+        #plt_h_lines.setVisible(False)
+        plt_h_z0.setVisible(False)
+        plt_h_arrow.setVisible(False)
 
 # Set up timer for animation
 timer = QtCore.QTimer()
