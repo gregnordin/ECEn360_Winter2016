@@ -60,9 +60,9 @@
                 <label for="idFreq">Frequency &nbsp;</label>
             </td>
             <td>
-                <input type="range" id="idFreq" min="1" max="100" value="100"
+                <input type="range" id="idFreq" min="1" max="100" value="50"
                        step="1" oninput="freqSliderUpdate(value)">
-                <output for="idFreq" id="idFreqValue">100 MHz</output>
+                <output for="idFreq" id="idFreqValue">50 MHz</output>
             </td>
           </tr>
           <tr>
@@ -166,7 +166,7 @@ axes.zscale = canvas.width * frac_max_x / axes.zrange;  // # canvas pixels per u
 axes.vscale = canvas.height * frac_max_y / axes.vrange;  // # canvas pixels per unit in v
 var npnts = 733;
 var twopi = 2.0*Math.PI;
-var freq_Hz = 100e6;
+var freq_Hz = 50e6;
 var velocity_mps = 2e8;
 var wavelength_m = velocity_mps / freq_Hz;
 var alpha = 0.0;
