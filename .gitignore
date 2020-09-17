@@ -4,3 +4,4 @@
 *.stl
 *.o
 *.hex
+.venv
